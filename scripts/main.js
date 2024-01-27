@@ -1,11 +1,13 @@
 const jobs = {
     requestUsername: {
         inputHandler: usernameHandler,
-        entryPoint: usernameEntry
+        entryPoint: usernameEntry,
+        internal: true
     },
     shell: {
         inputHandler: shellHandler,
-        entryPoint: shellEntry
+        entryPoint: shellEntry,
+        internal: true
     },
     aboutme: {
         entryPoint: aboutmeEntry,
@@ -17,6 +19,9 @@ const jobs = {
     },
     projects: {
         entryPoint: projectsEntry
+    },
+    fullscreen: {
+        entryPoint: fullscreenEntry
     },
     logout: {
         entryPoint: () => { document.cookie = 'username='; jobExit(); runJob('requestUsername'); return; }
@@ -86,11 +91,20 @@ function handleGenericInput(input) {
 }
 
 function shellEntry() {
-    let helpStr = "Welcome to my (terminal) website, where no terminal emulation libraries are allowed. No Xterm, no React, just pure, vanilla JavaScript ... unless a React app would be more impressive. In which case I did use React (I didn't). <br> Here you can play games, look at projects \
+    let commandStr = ""
+    let count = 1;
+    for(const prop in jobs) {
+        if(jobs[prop].internal) {
+            continue;
+        }
+        commandStr += `<span style="${green}">` + count + `.${close} ` + prop + `<br>`;
+        count += 1;
+    }
+    let helpStr = `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. No Xterm, no React, just pure, vanilla JavaScript ... unless a React app would be more impressive. In which case I did use React (I didn't). <br><br> Here you can play games, look at projects \
                    I've done, or learn about me. At any time you may type \"exit\" to go back to this \
                    screen. If there is not a text interface, there will be a back button to return here, or a new tab will open. \
-                   Other possible commands are: <br><br>1. games<br>&nbsp;&nbsp;&nbsp;a. wordstreak<br>2. projects<br>3. aboutme <br>4. logout<br><br> \
-                   To run these commands, type them in and press 'Enter'."
+                   Other possible commands are: <br><br> ${commandStr} <br> \
+                   To run these commands, type them in and press 'Enter'.`
     consoleLog(helpStr);
     console.log("Good update");
     updatePrompt('Enter a command');
@@ -152,5 +166,12 @@ function wordStreakInput(input) {
 function projectsEntry() {
     window.open('https://cims.nyu.edu/~aaw7943/graphics/', '_blank');
     jobExit();
+}
+
+function fullscreenEntry() {
+    const elem = document.documentElement;
+    elem.requestFullscreen();
+    jobExit();
+    return; 
 }
 

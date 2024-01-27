@@ -81,7 +81,7 @@ function wordStreakHandleEntry() {
     let highScore = getCookie('highscore'); 
     let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
     if(highScore) {
-        buildStr += ` High score: ${getCookie('highscore')}<br>`
+        buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
     } else {
         buildStr += `<br>`
     }
@@ -121,7 +121,7 @@ function handleAnswer(input) {
     highScore = getCookie('highscore'); 
     let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
     if(highScore) {
-        buildStr += ` High score: ${getCookie('highscore')}<br>`
+        buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
     } else {
         buildStr += `<br>`
     }
