@@ -1,0 +1,42 @@
+<head>
+    <title>Games</title>
+    <style>
+        body {
+            background-color: black;
+        }
+        div {
+            font-family: 'Courier New', Courier, monospace; 
+            color: white;
+            font-size: 0;
+            padding: 0;
+            margin: 0;
+        }
+        #terminal {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: blue;
+        }
+        span, p {
+            font-size: 20;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <p id="main"></p>
+        <div id="terminal" style="font-size: 0;">
+            <span id="user"></span>
+            <span id="prompt"></span>
+            <span id="input"></span>
+            <span id="cursor"></span>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="words.js"></script>
+    <script src="wordstreak.js"></script>
+    <script src="main.js"></script>
+    <script src="console.js"></script>
+</body>
