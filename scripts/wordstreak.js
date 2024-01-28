@@ -129,7 +129,7 @@ function handleAnswer(input) {
     for(let i = 0; i < 4; i++) {
         buildStr += `<span style="${green}">${lets[i]})</span> ${currentDefinitions[i]} <span style="${rightOrWrong}${black}">&nbsp;${currentWords[i]}&nbsp;${close}<br>`
     }
-    consoleLog(buildStr);
+    consoleLog(buildStr, animate=false);
     waitingOn = handleContinue;
 }
 

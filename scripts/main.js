@@ -33,7 +33,7 @@ const jobs = {
         inputHandler: asciiInput
     },
     logout: {
-        entryPoint: () => { document.cookie = 'username='; jobExit(); runJob('requestUsername'); return; }
+        entryPoint: () => { document.cookie = 'username='; runJob('requestUsername'); return; }
     }
 }
 
@@ -70,10 +70,6 @@ function updateUsername(text) {
     } else {
         $('#user').html("");
     }
-}
-
-function consoleLog(text) {
-    $('#main').html(text)
 }
 
 function handleInput(input) {
@@ -137,7 +133,7 @@ function usernameEntry() {
         return;
     }
     updateUsername('')
-    consoleLog('Please enter a username, or leave it blank. This is used for keeping track of scores on the games.')
+    consoleLog('Please enter a username, or leave it blank. This is used for keeping track of scores on the games.', animate=true, animateSpeed=1)
     updatePrompt('Enter a username, and press "Enter"');
 }
 
@@ -190,7 +186,6 @@ let alreadyAscii = false;
 
 const fileSelector = $("#file-selector")[0];
 fileSelector.addEventListener('change', (event) => {
-    consoleLog('Loading...')
     file = event.target.files[0];
     const img = $("#input-image")[0];
     const reader = new FileReader();
@@ -217,27 +212,12 @@ function displayAscii(img) {
     const ctx = canvas.getContext('2d', willReadFrequently=true);
     console.log(canvas.height, canvas.width);
     let buildStr = ""
-    let darkest = 1000;
-    let brightest = 0;
-    for(let y = 0; y < canvas.height; y++) {
-        for(let x = 0; x < canvas.width; x++) {
-            const imgData = ctx.getImageData(x, y, 1, 1).data;
-            let weight = imgData[0]+imgData[1]+imgData[2];
-            if(weight > brightest) {
-                brightest = weight;
-            }
-            if(weight < darkest) {
-                darkest = weight;
-            }
-        }
-    }
 
-    const range = ['.', ':', '-', '=', '+','*', '#', '%', '@']
+    const range = ['&nbsp;', '.', ':', '-', '=', '+','*', '#', '%', '@']
     for(let y = 0; y < canvas.height; y++) {
         for(let x = 0; x < canvas.width; x++) {
             const imgData = ctx.getImageData(x, y, 1, 1).data;
             let weight = imgData[0]+imgData[1]+imgData[2];
-            weight -= darkest;
             weight /= (255*3);
             weight *= (range.length-2);
             weight = Math.floor(weight);
@@ -251,7 +231,7 @@ function displayAscii(img) {
     const fontSize = height / canvas.height < 1 ? 1 : height / canvas.height;
     el.style.fontSize = fontSize + "px";
     console.log(height, canvas.height, canvas.width);
-    consoleLog(buildStr);
+    consoleLog(buildStr, animate=false);
 }
 
 function asciiInput(input) {

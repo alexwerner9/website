@@ -10,6 +10,26 @@ function backspace(query) {
     inputObj.text(inputObj.text().slice(0, -1));
 }
 
+function consoleLog(text, animate=true, animateSpeed=25) {
+    if(!animate) {
+        $('#main').html(text);
+        return;
+    }
+    let buildStr = "";
+    let i = 0;
+    const time = setInterval(() => {
+        buildStr = text.slice(0, i);
+        if(i >= text.length + animateSpeed + 1) {
+            console.log("setting1" + buildStr);
+            $('#main').html(buildStr);
+            clearTimeout(time);
+            return;
+        }
+        $('#main').html(buildStr);
+        i += animateSpeed;
+    }, .1);
+}
+
 setInterval(() => {
     if(showingCursor) {
         backspace('#cursor');
@@ -20,8 +40,15 @@ setInterval(() => {
     }
 }, 700);
 
+let block = false;
+input.addEventListener('compositionstart', function() { block = true; });
+input.addEventListener('compositionend', function() { block = false; });
+
 document.addEventListener("keydown", (event) => {
-    if(event.isComposing) {
+    if(event.key == 'Control') {
+        block = true;
+    }
+    if(block) {
         return;
     }
     if(event.key == 'Backspace') {
@@ -36,6 +63,10 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keyup", (event) => {
+    if(event.key == 'Control') {
+        block = false;
+        return;
+    }
 })
 
 
