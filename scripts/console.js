@@ -21,6 +21,9 @@ setInterval(() => {
 }, 700);
 
 document.addEventListener("keydown", (event) => {
+    if(event.isComposing) {
+        return;
+    }
     if(event.key == 'Backspace') {
         backspace('#input');
     } else if(event.key == 'Enter') {

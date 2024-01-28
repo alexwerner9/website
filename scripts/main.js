@@ -1,3 +1,8 @@
+
+// ideas:
+// spotify listener (what i'm listening to)
+// view the code
+// ascii art / color codes
 const jobs = {
     requestUsername: {
         inputHandler: usernameHandler,
@@ -23,6 +28,10 @@ const jobs = {
     fullscreen: {
         entryPoint: fullscreenEntry
     },
+    ascii: {
+        entryPoint: asciiEntry,
+        inputHandler: asciiInput
+    },
     logout: {
         entryPoint: () => { document.cookie = 'username='; jobExit(); runJob('requestUsername'); return; }
     }
@@ -33,6 +42,8 @@ let aliases = {
 }
 let currentJob = 'requestUsername';
 runJob(currentJob);
+
+let oldFont = null;
 
 function getCookie(key) {
     let newKey = key + "="
@@ -173,5 +184,86 @@ function fullscreenEntry() {
     elem.requestFullscreen();
     jobExit();
     return; 
+}
+
+let alreadyAscii = false;
+
+const fileSelector = $("#file-selector")[0];
+fileSelector.addEventListener('change', (event) => {
+    consoleLog('Loading...')
+    file = event.target.files[0];
+    const img = $("#input-image")[0];
+    const reader = new FileReader();
+    reader.addEventListener('load', (event) => {
+        img.onload = function() {
+            displayAscii(this)
+        }
+        img.src = event.target.result;
+    });
+    reader.readAsDataURL(file);
+})
+
+function asciiEntry() {
+    consoleLog('');
+    updatePrompt("Press enter to choose file to ascii-fy");
+}
+
+function displayAscii(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
+
+    const ctx = canvas.getContext('2d', willReadFrequently=true);
+    console.log(canvas.height, canvas.width);
+    let buildStr = ""
+    let darkest = 1000;
+    let brightest = 0;
+    for(let y = 0; y < canvas.height; y++) {
+        for(let x = 0; x < canvas.width; x++) {
+            const imgData = ctx.getImageData(x, y, 1, 1).data;
+            let weight = imgData[0]+imgData[1]+imgData[2];
+            if(weight > brightest) {
+                brightest = weight;
+            }
+            if(weight < darkest) {
+                darkest = weight;
+            }
+        }
+    }
+
+    const range = ['.', ':', '-', '=', '+','*', '#', '%', '@']
+    for(let y = 0; y < canvas.height; y++) {
+        for(let x = 0; x < canvas.width; x++) {
+            const imgData = ctx.getImageData(x, y, 1, 1).data;
+            let weight = imgData[0]+imgData[1]+imgData[2];
+            weight -= darkest;
+            weight /= (255*3);
+            weight *= (range.length-2);
+            weight = Math.floor(weight);
+            buildStr += range[weight] + " ";
+        }
+        buildStr += "<br>"
+    }
+    const el = $("#main")[0];
+    oldFont = window.getComputedStyle(el, null).getPropertyValue('font-size');
+    const height = window.innerHeight * 0.8;
+    const fontSize = height / canvas.height < 1 ? 1 : height / canvas.height;
+    el.style.fontSize = fontSize + "px";
+    console.log(height, canvas.height, canvas.width);
+    consoleLog(buildStr);
+}
+
+function asciiInput(input) {
+    if(alreadyAscii) {
+        alreadyAscii = false;
+        const el = document.getElementById('main');
+        el.style.fontSize = oldFont;
+        jobExit();
+        return;
+    }
+    fileSelector.click();
+    alreadyAscii = true;
+    updatePrompt("Press any key to exit")
 }
 
