@@ -129,6 +129,7 @@ function handleAnswer(input, fromclick=false) {
     }
     document.cookie = 'currentstreak=' + streak;
     if(fromclick) {
+        handleContinue();
         return;
     }
     highScore = getCookie('highscore'); 
