@@ -10,7 +10,7 @@ function backspace(query) {
     inputObj.text(inputObj.text().slice(0, -1));
 }
 
-function consoleLog(text, animate=true, animateSpeed=25) {
+function consoleLog(text, cb=null, animate=true, animateSpeed=25) {
     if(!animate) {
         $('#main').html(text);
         return;
@@ -20,10 +20,11 @@ function consoleLog(text, animate=true, animateSpeed=25) {
     const time = setInterval(() => {
         buildStr = text.slice(0, i);
         if(i >= text.length + animateSpeed + 1) {
-            console.log("setting1" + buildStr);
             $('#main').html(buildStr);
             clearTimeout(time);
-            registerClasses();
+            if(cb) {
+                cb();
+            }
             return;
         }
         $('#main').html(buildStr);

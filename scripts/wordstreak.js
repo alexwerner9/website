@@ -93,10 +93,12 @@ function wordStreakHandleEntry() {
     }
     buildStr += `What is the definition of: <span style="${backBlue}${white}">${currentWords[correctAnswer]}</span>?<br><br>`
     for(let i = 0; i < 4; i++) {
-        buildStr += `<span style="${green}">${lets[i]})</span> ${currentDefinitions[i]}<br>`
+        buildStr += `<span style="${green}">${lets[i]})</span> <span id=word${i}>${currentDefinitions[i]}${close}<br>`
     }
 
-    consoleLog(buildStr);
+    buildStr += `<br><br><span id='goback'>Go back</span>`
+
+    consoleLog(buildStr, cb=registerWordstreakClasses);
     updatePrompt("Answer (or \"exit\" to go back)")
     waitingOn = handleAnswer;
 }
@@ -105,7 +107,7 @@ function wordStreakHandleInput(input) {
     waitingOn(input);
 }
 
-function handleAnswer(input) {
+function handleAnswer(input, fromclick=false) {
     let rightOrWrong;
     let highScore;
     if(!lets.includes(input)) {
@@ -126,6 +128,9 @@ function handleAnswer(input) {
         updatePrompt("Press any key to continue")
     }
     document.cookie = 'currentstreak=' + streak;
+    if(fromclick) {
+        return;
+    }
     highScore = getCookie('highscore'); 
     let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
     if(highScore) {
@@ -143,5 +148,42 @@ function handleAnswer(input) {
 
 function handleContinue(input) {
     wordStreakHandleEntry();
+}
+
+
+
+function registerWordstreakClasses() {
+    for(let i = 0; i < 4; i++) {
+        $("#word"+i)[0].addEventListener("mouseover", (event) => {
+            event.target.style['background-color'] = 'white';
+            event.target.style['color'] = 'black';
+            event.target.style.cursor = 'pointer'
+        });
+        $("#word"+i)[0].addEventListener("mouseout", (event) => {
+            event.target.style['background-color'] = 'black';
+            event.target.style['color'] = 'white';
+            event.target.style.cursor = 'auto'
+        });
+        $("#word"+i)[0].addEventListener("click", (event) => {
+            event.target.style['background-color'] = 'black';
+            event.target.style['color'] = 'white';
+            event.target.style.cursor = 'auto';
+            handleAnswer(lets[i], fromclick=true);
+        });
+    }
+    $("#goback")[0].addEventListener("mouseover", (event) => {
+        event.target.style['background-color'] = 'white';
+        event.target.style['color'] = 'black';
+        event.target.style.cursor = 'pointer'
+    });
+    $("#goback")[0].addEventListener("mouseout", (event) => {
+        event.target.style['background-color'] = 'black';
+        event.target.style['color'] = 'white';
+        event.target.style.cursor = 'auto'
+    });
+    $("#goback")[0].addEventListener("click", (event) => {
+        jobExit();
+        return;
+    });
 }
 

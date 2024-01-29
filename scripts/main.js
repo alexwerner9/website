@@ -87,7 +87,6 @@ function updatePrompt(text) {
     const terminal = $("#terminal")[0];
     const height = window.getComputedStyle(terminal, null).getPropertyValue('height');
     main.style.height = window.innerHeight - parseFloat(height) + "px";
-    console.log(parseFloat(height))
 }
 
 function updateUsername(text) {
@@ -112,7 +111,6 @@ function runJob(job) {
     }
     currentJob = job;
     document.cookie = "lastjob=" + currentJob;
-    console.log("Running: " + currentJob)
     jobs[currentJob].entryPoint();
 }
 
@@ -134,7 +132,7 @@ function shellEntry() {
         if(jobs[prop].internal) {
             continue;
         }
-        commandStr += `<span style="${green}">` + count + `.${close} <span id=${count}>` + prop + `${close}<br>`;
+        commandStr += `<span style="${green}">` + count + `.${close} <span id=command${count}>` + prop + `${close}<br>`;
         count += 1;
     }
     let helpStr = welcome + `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. In fact, no Xterm, React, Angular, Vue, Bootstrap, Lodash, etc. Just pure, vanilla JavaScript ... unless you're an employer, in which case I used all of the above (and if you're a lawyer, I didn't actually) :) I will admit I used a bit of jQuery, but does that count?<br><br> Here you can play games, look at projects \
@@ -142,30 +140,28 @@ function shellEntry() {
                    screen. If there is not a text interface, there will be a back button to return here, or a new tab will open. \
                    Other possible commands are: <br><br> ${commandStr} <br> \
                    To run these commands, type them in and press 'Enter'.`
-    consoleLog(helpStr);
-    console.log("Good update");
+    consoleLog(helpStr, cb=registerShellClasses);
     updatePrompt('Enter a command');
 
 }
 
-function registerClasses() {
+function registerShellClasses() {
     let count = 1;
     for(const prop in jobs) {
         if(jobs[prop].internal) {
             continue;
         }
-        $("#"+count)[0].addEventListener("mouseover", (event) => {
+        $("#command"+count)[0].addEventListener("mouseover", (event) => {
             event.target.style['background-color'] = 'white';
             event.target.style['color'] = 'black';
             event.target.style.cursor = 'pointer'
         });
-        $("#"+count)[0].addEventListener("mouseout", (event) => {
+        $("#command"+count)[0].addEventListener("mouseout", (event) => {
             event.target.style['background-color'] = 'black';
             event.target.style['color'] = 'white';
             event.target.style.cursor = 'auto'
         });
-        $("#"+count)[0].addEventListener("click", (event) => {
-            console.log(event.target.id)
+        $("#command"+count)[0].addEventListener("click", (event) => {
             event.target.style['background-color'] = 'black';
             event.target.style['color'] = 'white';
             event.target.style.cursor = 'auto';
@@ -217,7 +213,6 @@ function aboutmeHandler(input) {
 }
 
 function wordStreakEntry() {
-    console.log("In word streak;");
     wordStreakHandleEntry();
 }
 
@@ -269,7 +264,6 @@ function displayAscii(img) {
     canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height);
 
     const ctx = canvas.getContext('2d', willReadFrequently=true);
-    console.log(canvas.height, canvas.width);
     let buildStr = ""
 
     const range = ['&nbsp;', '.', ':', '-', '=', '+','*', '#', '%', '@']
@@ -289,7 +283,6 @@ function displayAscii(img) {
     const height = window.innerHeight * 0.8;
     const fontSize = height / canvas.height < 1 ? 1 : height / canvas.height;
     el.style.fontSize = fontSize + "px";
-    console.log(height, canvas.height, canvas.width);
     consoleLog(buildStr, animate=false);
 }
 
