@@ -23,6 +23,7 @@ function consoleLog(text, animate=true, animateSpeed=25) {
             console.log("setting1" + buildStr);
             $('#main').html(buildStr);
             clearTimeout(time);
+            registerClasses();
             return;
         }
         $('#main').html(buildStr);

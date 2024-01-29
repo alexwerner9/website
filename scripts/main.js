@@ -103,6 +103,9 @@ function handleInput(input) {
 }
 
 function runJob(job) {
+    if(aliases[job]) {
+        job = aliases[job];
+    }
     if(!jobs[job]) {
         updatePrompt("Not a valid command. Enter a command")
         return;
@@ -131,7 +134,7 @@ function shellEntry() {
         if(jobs[prop].internal) {
             continue;
         }
-        commandStr += `<span style="${green}">` + count + `.${close} ` + prop + `<br>`;
+        commandStr += `<span style="${green}">` + count + `.${close} <span id=${count}>` + prop + `${close}<br>`;
         count += 1;
     }
     let helpStr = welcome + `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. In fact, no Xterm, React, Angular, Vue, Bootstrap, Lodash, etc. Just pure, vanilla JavaScript ... unless you're an employer, in which case I used all of the above (and if you're a lawyer, I didn't actually) :) I will admit I used a bit of jQuery, but does that count?<br><br> Here you can play games, look at projects \
@@ -142,14 +145,38 @@ function shellEntry() {
     consoleLog(helpStr);
     console.log("Good update");
     updatePrompt('Enter a command');
+
+}
+
+function registerClasses() {
+    let count = 1;
+    for(const prop in jobs) {
+        if(jobs[prop].internal) {
+            continue;
+        }
+        $("#"+count)[0].addEventListener("mouseover", (event) => {
+            event.target.style['background-color'] = 'white';
+            event.target.style['color'] = 'black';
+            event.target.style.cursor = 'pointer'
+        });
+        $("#"+count)[0].addEventListener("mouseout", (event) => {
+            event.target.style['background-color'] = 'black';
+            event.target.style['color'] = 'white';
+            event.target.style.cursor = 'auto'
+        });
+        $("#"+count)[0].addEventListener("click", (event) => {
+            console.log(event.target.id)
+            event.target.style['background-color'] = 'black';
+            event.target.style['color'] = 'white';
+            event.target.style.cursor = 'auto';
+            runJob(parseInt(event.target.id));
+        });
+        count += 1;
+    }
 }
 
 function shellHandler(input) {
-    if(aliases[input]) {
-        runJob(aliases[input]);
-    } else {
-        runJob(input);
-    }
+    runJob(input);
 }
 
 function usernameEntry() {
