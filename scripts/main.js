@@ -165,7 +165,7 @@ function registerShellClasses() {
             event.target.style['background-color'] = 'black';
             event.target.style['color'] = 'white';
             event.target.style.cursor = 'auto';
-            runJob(parseInt(event.target.id));
+            runJob(event.target.id[event.target.id.length - 1]);
         });
         count += 1;
     }
