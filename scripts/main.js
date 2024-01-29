@@ -1,8 +1,11 @@
 
 // ideas:
 // spotify listener (what i'm listening to)
+// spotify add to playlist
 // view the code
 // ascii art / color codes
+// sunset with background colors
+// display the source code
 const jobs = {
     requestUsername: {
         inputHandler: usernameHandler,
@@ -38,7 +41,13 @@ const jobs = {
 }
 
 let aliases = {
-    'ws': 'wordstreak'
+    'ws': 'wordstreak',
+    '1': 'aboutme',
+    '2': 'wordstreak',
+    '3': 'projects',
+    '4': 'fullscreen',
+    '5': 'ascii',
+    '6': 'login'
 }
 
 const welcome = "\
@@ -48,7 +57,11 @@ const welcome = "\
 !_/ \\_! |___| |___|  \\__/  \\__/  |_| |_| |___|<br><br>\
 ".replaceAll(' ', '&nbsp;')
 
-let currentJob = 'shell';
+let currentJob = getCookie('lastjob');
+if(!currentJob) {
+    currentJob = 'shell';
+}
+
 runJob(currentJob);
 
 let oldFont = null;
@@ -95,6 +108,7 @@ function runJob(job) {
         return;
     }
     currentJob = job;
+    document.cookie = "lastjob=" + currentJob;
     console.log("Running: " + currentJob)
     jobs[currentJob].entryPoint();
 }

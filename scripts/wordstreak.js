@@ -79,6 +79,12 @@ function wordStreakHandleEntry() {
     correctAnswer = Math.floor(Math.random() * 4);
 
     let highScore = getCookie('highscore'); 
+    let currentStreak = getCookie('currentstreak');
+    if(!currentStreak) {
+        currentStreak = 0;
+    } else {
+        streak = parseInt(currentStreak);
+    }
     let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
     if(highScore) {
         buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
@@ -89,8 +95,9 @@ function wordStreakHandleEntry() {
     for(let i = 0; i < 4; i++) {
         buildStr += `<span style="${green}">${lets[i]})</span> ${currentDefinitions[i]}<br>`
     }
+
     consoleLog(buildStr);
-    updatePrompt("Answer")
+    updatePrompt("Answer (or \"exit\" to go back)")
     waitingOn = handleAnswer;
 }
 
@@ -118,6 +125,7 @@ function handleAnswer(input) {
         rightOrWrong = backRed;
         updatePrompt("Press any key to continue")
     }
+    document.cookie = 'currentstreak=' + streak;
     highScore = getCookie('highscore'); 
     let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
     if(highScore) {
