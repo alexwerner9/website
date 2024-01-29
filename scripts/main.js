@@ -32,7 +32,7 @@ const jobs = {
         entryPoint: asciiEntry,
         inputHandler: asciiInput
     },
-    logout: {
+    login: {
         entryPoint: () => { document.cookie = 'username='; runJob('requestUsername'); return; }
     }
 }
@@ -40,7 +40,15 @@ const jobs = {
 let aliases = {
     'ws': 'wordstreak'
 }
-let currentJob = 'requestUsername';
+
+const welcome = "\
+ _   _   ___   _      ___   __    __ __   ___ <br>\
+| | | | | __| | |    / _/  /__\\  |  |  | | __|<br>\
+|  |  | | _|  | |_  | \\__ | \\/ | | \\_/ | | _| <br>\
+!_/ \\_! |___| |___|  \\__/  \\__/  |_| |_| |___|<br><br>\
+".replaceAll(' ', '&nbsp;')
+
+let currentJob = 'shell';
 runJob(currentJob);
 
 let oldFont = null;
@@ -62,6 +70,11 @@ function getCookie(key) {
 
 function updatePrompt(text) {
     $('#prompt').html(text + ": ");
+    const main = $("#main")[0];
+    const terminal = $("#terminal")[0];
+    const height = window.getComputedStyle(terminal, null).getPropertyValue('height');
+    main.style.height = window.innerHeight - parseFloat(height) + "px";
+    console.log(parseFloat(height))
 }
 
 function updateUsername(text) {
@@ -107,7 +120,7 @@ function shellEntry() {
         commandStr += `<span style="${green}">` + count + `.${close} ` + prop + `<br>`;
         count += 1;
     }
-    let helpStr = `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. No Xterm, no React, just pure, vanilla JavaScript ... unless a React app would be more impressive. In which case I did use React (I didn't). <br><br> Here you can play games, look at projects \
+    let helpStr = welcome + `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. In fact, no Xterm, React, Angular, Vue, Bootstrap, Lodash, etc. Just pure, vanilla JavaScript ... unless you're an employer, in which case I used all of the above (and if you're a lawyer, I didn't actually) :) I will admit I used a bit of jQuery, but does that count?<br><br> Here you can play games, look at projects \
                    I've done, or learn about me. At any time you may type \"exit\" to go back to this \
                    screen. If there is not a text interface, there will be a back button to return here, or a new tab will open. \
                    Other possible commands are: <br><br> ${commandStr} <br> \
@@ -132,12 +145,17 @@ function usernameEntry() {
         jobExit();
         return;
     }
+
     updateUsername('')
-    consoleLog('Please enter a username, or leave it blank. This is used for keeping track of scores on the games.', animate=true, animateSpeed=1)
+    consoleLog('Enter a username or press "Enter". The username used for keeping track of scores on the games.', animate=true, animateSpeed=1)
     updatePrompt('Enter a username, and press "Enter"');
 }
 
 function usernameHandler(input) {
+    if(input == 'back' || input == 'exit') {
+        jobExit();
+        return;
+    }
     updateUsername(input);
     document.cookie = "username=" + input;
     jobExit();
