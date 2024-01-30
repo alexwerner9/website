@@ -32,6 +32,10 @@ const jobs = {
         entryPoint: projectsEntry,
         rel: false
     },
+    sourcecode: {
+        entryPoint: sourcecodeEntry,
+        rel: false
+    },
     login: {
         entryPoint: usernameEntry,
         inputHandler: usernameHandler,
@@ -45,7 +49,8 @@ let aliases = {
     '2': 'wordstreak',
     '3': 'ascii',
     '4': 'projects',
-    '5': 'login'
+    '5': 'sourcecode',
+    '6': 'login'
 }
 
 // https://stackoverflow.com/a/11381730
@@ -316,5 +321,10 @@ function asciiInput(input) {
     fileSelector.click();
     alreadyAscii = true;
     updatePrompt("Press any key to exit")
+}
+
+function sourcecodeEntry() {
+    window.open('https://github.com/alexwerner9/alexwerner9.github.io', '_blank');
+    jobExit(rel=false);
 }
 
