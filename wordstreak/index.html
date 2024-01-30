@@ -1,0 +1,62 @@
+<head>
+    <title>Alex Werner</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <style>
+        body {
+            background-color: black;
+            padding: 0;
+            margin: 0;
+        }
+        div {
+            font-family: 'Courier New', Courier, monospace; 
+            color: white;
+            font-size: 0;
+            padding: 0;
+            margin: 0;
+        }
+        #terminal {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: blue;
+        }
+        span, p {
+            font-size: 20;
+            padding: 0;
+            margin: 0;
+        }
+        #main {
+            max-height: 100%;
+            overflow-y: scroll;
+            overflow-y: scroll;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        }
+        #main::-webkit-scrollbar { /* WebKit */
+            width: 0;
+            height: 0;
+        }
+        .hoverlink {
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="file-selector" accept=".jpg, .jpeg, .png", style="display: none;">
+    <img src="" id="input-image" style="display: none;">
+    <div>
+        <p id="main"></p>
+        <div id="terminal" style="font-size: 0;">
+            <span id="user"></span>
+            <span id="prompt"></span>
+            <span id="input"></span>
+            <span id="cursor"></span>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../scripts/words.js"></script>
+    <script type="text/javascript" src="../scripts/wordstreak.js"></script>
+    <script type="text/javascript" src="../scripts/console.js"></script>
+    <script type="text/javascript" src="../scripts/main.js"></script>
+</body>
