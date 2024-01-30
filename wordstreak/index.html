@@ -1,6 +1,7 @@
 <head>
     <title>Alex Werner</title>
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
             background-color: black;
@@ -10,18 +11,25 @@
         div {
             font-family: 'Courier New', Courier, monospace; 
             color: white;
-            font-size: 0;
             padding: 0;
             margin: 0;
+            font-size: 20px;
+            padding: 0;
+            margin: 0;
+        }
+        @media only screen and (max-width: 600px) {
+            div {
+                font-size: 17px;
+            }
+            #terminal {
+                display: none;
+            }
         }
         #terminal {
             position: fixed;
             bottom: 0;
             width: 100%;
             background-color: blue;
-        }
-        span, p {
-            font-size: 20px;
             padding: 0;
             margin: 0;
         }
@@ -51,8 +59,7 @@
         <div id="terminal">
             <span id="user"></span>
             <span id="prompt"></span>
-            <span id="input"></span>
-            <span id="cursor"></span>
+            <span id="input"></span><span id="cursor"></span>
         </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>

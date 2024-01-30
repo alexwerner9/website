@@ -25,7 +25,6 @@ function consoleLog(text, cb=null, animate=true, animateSpeed=25) {
             if(cb) {
                 cb();
             }
-            $('#main')[0].style['font-size'] = '20px'
             return;
         }
         $('#main').html(buildStr);
