@@ -97,7 +97,7 @@ function wordStreakHandleEntry() {
     }
 
     consoleLog(buildStr, cb=registerWordstreakClasses);
-    updatePrompt("Answer (or \"exit\" to go back)")
+    updatePrompt("Answer (or \"exit\" to go to the home screen)")
     waitingOn = handleAnswer;
 }
 
