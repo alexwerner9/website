@@ -7,36 +7,35 @@
 // sunset with background colors
 // display the source code
 const jobs = {
-    requestUsername: {
-        inputHandler: usernameHandler,
-        entryPoint: usernameEntry,
-        internal: true
-    },
     shell: {
         inputHandler: shellHandler,
         entryPoint: shellEntry,
-        internal: true
+        internal: true,
+        rel: true
     },
     aboutme: {
         entryPoint: aboutmeEntry,
-        inputHandler: aboutmeHandler
+        inputHandler: aboutmeHandler,
+        rel: true
     },
     wordstreak: {
         entryPoint: wordStreakEntry,
-        inputHandler: wordStreakInput
-    },
-    projects: {
-        entryPoint: projectsEntry
-    },
-    fullscreen: {
-        entryPoint: fullscreenEntry
+        inputHandler: wordStreakInput,
+        rel: true
     },
     ascii: {
         entryPoint: asciiEntry,
-        inputHandler: asciiInput
+        inputHandler: asciiInput,
+        rel: true
+    },
+    projects: {
+        entryPoint: projectsEntry,
+        rel: false
     },
     login: {
-        entryPoint: () => { document.cookie = 'username='; runJob('requestUsername'); return; }
+        entryPoint: usernameEntry,
+        inputHandler: usernameHandler,
+        rel: true
     }
 }
 
@@ -44,10 +43,9 @@ let aliases = {
     'ws': 'wordstreak',
     '1': 'aboutme',
     '2': 'wordstreak',
-    '3': 'projects',
-    '4': 'fullscreen',
-    '5': 'ascii',
-    '6': 'login'
+    '3': 'ascii',
+    '4': 'projects',
+    '5': 'login'
 }
 
 const welcome = "\
@@ -57,11 +55,15 @@ const welcome = "\
 !_/ \\_! |___| |___|  \\__/  \\__/  |_| |_| |___|<br><br>\
 ".replaceAll(' ', '&nbsp;')
 
-let currentJob = getCookie('lastjob');
-if(!currentJob) {
-    currentJob = 'shell';
+// start up the correct page
+let currentPage = location.href;
+let cp = currentPage.split('/');
+currentJob = cp[cp.length-2];
+if(!['shell', 'wordstreak', 'ascii', 'aboutme', 'login'].includes(currentJob)) {
+    currentJob = 'shell'
 }
-
+let u = getCookie('username');
+updateUsername(u);
 runJob(currentJob);
 
 let oldFont = null;
@@ -101,7 +103,7 @@ function handleInput(input) {
     jobs[currentJob].inputHandler(input);
 }
 
-function runJob(job) {
+function relocate(job, justRun=false) {
     if(aliases[job]) {
         job = aliases[job];
     }
@@ -109,13 +111,25 @@ function runJob(job) {
         updatePrompt("Not a valid command. Enter a command")
         return;
     }
+    if(!jobs[job].rel || justRun) {
+        runJob(job);
+        return;
+    }
+    window.history.pushState(null, null, '../'+job)
+    window.location.replace('../'+job);
+}
+
+function runJob(job) {
     currentJob = job;
-    document.cookie = "lastjob=" + currentJob;
     jobs[currentJob].entryPoint();
 }
 
-function jobExit() {
-    runJob('shell');
+function jobExit(rel=true) {
+    if(!rel) {
+        relocate('shell', justRun=true);
+        return;
+    }
+    relocate('shell');
 }
 
 function handleGenericInput(input) {
@@ -137,7 +151,7 @@ function shellEntry() {
     }
     let helpStr = welcome + `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. In fact, no Xterm, React, Angular, Vue, Bootstrap, Lodash, etc. Just pure, vanilla JavaScript ... unless you're an employer, in which case I used all of the above (and if you're a lawyer, I didn't actually) :) I will admit I used a bit of jQuery, but does that count?<br><br> Here you can play games, look at projects \
                    I've done, or learn about me. At any time you may type \"exit\" to go back to this \
-                   screen. If there is not a text interface, there will be a back button to return here, or a new tab will open. \
+                   screen or just use the back button. \
                    Other possible commands are: <br><br> ${commandStr} <br> \
                    To run these commands, type them in and press 'Enter'.`
     consoleLog(helpStr, cb=registerShellClasses);
@@ -165,22 +179,20 @@ function registerShellClasses() {
             event.target.style['background-color'] = 'black';
             event.target.style['color'] = 'white';
             event.target.style.cursor = 'auto';
-            runJob(event.target.id[event.target.id.length - 1]);
+            relocate(event.target.id[event.target.id.length - 1]);
         });
         count += 1;
     }
 }
 
 function shellHandler(input) {
-    runJob(input);
+    relocate(input);
 }
 
 function usernameEntry() {
     let username = getCookie('username')
     if(username) {
-        updateUsername(username);
-        jobExit();
-        return;
+        document.cookie = "username= ; path=/"
     }
 
     updateUsername('')
@@ -194,7 +206,7 @@ function usernameHandler(input) {
         return;
     }
     updateUsername(input);
-    document.cookie = "username=" + input;
+    document.cookie = "username=" + input + "; path=/";
     jobExit();
 }
 
@@ -226,13 +238,13 @@ function wordStreakInput(input) {
 
 function projectsEntry() {
     window.open('https://cims.nyu.edu/~aaw7943/graphics/', '_blank');
-    jobExit();
+    jobExit(rel=false);
 }
 
 function fullscreenEntry() {
     const elem = document.documentElement;
     elem.requestFullscreen();
-    jobExit();
+    jobExit(rel=false);
     return; 
 }
 

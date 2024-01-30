@@ -96,8 +96,6 @@ function wordStreakHandleEntry() {
         buildStr += `<span style="${green}">${lets[i]})</span> <span id=word${i}>${currentDefinitions[i]}${close}<br>`
     }
 
-    buildStr += `<br><br><span id='goback'>Go back</span>`
-
     consoleLog(buildStr, cb=registerWordstreakClasses);
     updatePrompt("Answer (or \"exit\" to go back)")
     waitingOn = handleAnswer;
@@ -172,19 +170,5 @@ function registerWordstreakClasses() {
             handleAnswer(lets[i], fromclick=true);
         });
     }
-    $("#goback")[0].addEventListener("mouseover", (event) => {
-        event.target.style['background-color'] = 'white';
-        event.target.style['color'] = 'black';
-        event.target.style.cursor = 'pointer'
-    });
-    $("#goback")[0].addEventListener("mouseout", (event) => {
-        event.target.style['background-color'] = 'black';
-        event.target.style['color'] = 'white';
-        event.target.style.cursor = 'auto'
-    });
-    $("#goback")[0].addEventListener("click", (event) => {
-        jobExit();
-        return;
-    });
 }
 
