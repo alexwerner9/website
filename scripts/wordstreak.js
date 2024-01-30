@@ -85,15 +85,19 @@ function wordStreakHandleEntry() {
     } else {
         streak = parseInt(currentStreak);
     }
-    let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
+    let buildStr = `Current streak: <span style="${backBlue}${white}" id="currentstreak">${streak}${close}.`
     if(highScore) {
         buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
     } else {
         buildStr += `<br>`
     }
+    const onMobile = mobileCheck();
     buildStr += `What is the definition of: <span style="${backBlue}${white}">${currentWords[correctAnswer]}</span>?<br><br>`
     for(let i = 0; i < 4; i++) {
         buildStr += `<span style="${green}">${lets[i]})</span> <span id=word${i}>${currentDefinitions[i]}${close}<br>`
+        if(onMobile) {
+            buildStr += "<br>";
+        }
     }
 
     consoleLog(buildStr, cb=registerWordstreakClasses);
@@ -106,8 +110,8 @@ function wordStreakHandleInput(input) {
 }
 
 function handleAnswer(input, fromclick=false) {
-    let rightOrWrong;
     let highScore;
+    let correct = false;
     if(!lets.includes(input)) {
         updatePrompt("Answer must be one of a,b,c or d");
         return;
@@ -118,28 +122,39 @@ function handleAnswer(input, fromclick=false) {
         if(!highScore || highScore < streak) {
             document.cookie = 'highscore=' + streak;
         }
-        rightOrWrong = backGreen;
+        correct = true;
         updatePrompt("Press any key to continue")
     } else {
         streak = 0;
-        rightOrWrong = backRed;
         updatePrompt("Press any key to continue")
     }
+    let rightOrWrong = correct ? backGreen : backRed;
     document.cookie = 'currentstreak=' + streak;
     if(fromclick) {
-        handleContinue();
+        $("#word"+correctAnswer)[0].style['background-color'] = correct ? 'green' : 'red';
+        $("#currentstreak")[0].style['background-color'] = correct ? 'blue' : 'red';
+        setTimeout(() => {
+            $("#word"+correctAnswer)[0].style['background-color'] = 'black';
+            $("#currentstreak")[0].style['background-color'] = 'blue';
+            handleContinue();
+        }, correct ? 250 : 1200);
         return;
     }
     highScore = getCookie('highscore'); 
-    let buildStr = `Current streak: <span style="${backBlue}${white}">${streak}${close}.`
+    let buildStr = `Current streak: <span style="${backBlue}${white}" id="currentstreak">${streak}${close}.`
     if(highScore) {
         buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
     } else {
         buildStr += `<br>`
     }
+    
+    const onMobile = mobileCheck();
     buildStr += `What is the definition of: <span style="${backBlue}${white}">${currentWords[correctAnswer]}</span>?<br><br>`
     for(let i = 0; i < 4; i++) {
         buildStr += `<span style="${green}">${lets[i]})</span> ${currentDefinitions[i]} <span style="${rightOrWrong}${black}">&nbsp;${currentWords[i]}&nbsp;${close}<br>`
+        if(onMobile) {
+            buildStr += "<br>";
+        }
     }
     consoleLog(buildStr, animate=false);
     waitingOn = handleContinue;
@@ -149,24 +164,16 @@ function handleContinue(input) {
     wordStreakHandleEntry();
 }
 
-
-
 function registerWordstreakClasses() {
     for(let i = 0; i < 4; i++) {
         $("#word"+i)[0].addEventListener("mouseover", (event) => {
-            event.target.style['background-color'] = 'white';
-            event.target.style['color'] = 'black';
-            event.target.style.cursor = 'pointer'
+            event.target.classList.add('hoverlink');
         });
         $("#word"+i)[0].addEventListener("mouseout", (event) => {
-            event.target.style['background-color'] = 'black';
-            event.target.style['color'] = 'white';
-            event.target.style.cursor = 'auto'
+            event.target.classList.remove('hoverlink');
         });
         $("#word"+i)[0].addEventListener("click", (event) => {
-            event.target.style['background-color'] = 'black';
-            event.target.style['color'] = 'white';
-            event.target.style.cursor = 'auto';
+            event.target.classList.remove('hoverlink');
             handleAnswer(lets[i], fromclick=true);
         });
     }
