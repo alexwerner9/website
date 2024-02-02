@@ -41,6 +41,11 @@ const jobs = {
         inputHandler: typingtestHandler,
         rel: true
     },
+    basketball: {
+        entryPoint: basketballEntry,
+        inputHandler: basketballHandler,
+        rel: true
+    },
     login: {
         entryPoint: usernameEntry,
         inputHandler: usernameHandler,
@@ -56,7 +61,8 @@ let aliases = {
     '4': 'projects',
     '5': 'sourcecode',
     '6': 'typingtest',
-    '7': 'login'
+    '7': 'basketball',
+    '8': 'login'
 }
 
 // https://stackoverflow.com/a/11381730
@@ -77,7 +83,7 @@ const welcome = "\
 let currentPage = location.href;
 let cp = currentPage.split('/');
 currentJob = cp[cp.length-2];
-if(!['shell', 'wordstreak', 'ascii', 'aboutme', 'typingtest', 'login'].includes(currentJob)) {
+if(!['shell', 'wordstreak', 'ascii', 'aboutme', 'typingtest', 'basketball', 'login'].includes(currentJob)) {
     currentJob = 'shell'
 }
 let u = getCookie('username');

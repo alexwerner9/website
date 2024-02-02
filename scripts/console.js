@@ -12,6 +12,7 @@ function backspace(query) {
 
 function consoleLog(text, cb=null, animate=true, animateSpeed=25) {
     if(!animate) {
+        console.log("don't animate")
         $('#main').html(text);
         return;
     }
