@@ -44,7 +44,8 @@ const jobs = {
     basketball: {
         entryPoint: basketballEntry,
         inputHandler: basketballHandler,
-        rel: true
+        rel: true,
+        extraText: '(work in progress)'
     },
     login: {
         entryPoint: usernameEntry,
@@ -170,7 +171,11 @@ function shellEntry() {
         if(jobs[prop].internal) {
             continue;
         }
-        commandStr += `<span style="${green}">` + count + `.${close} <span id=command${count}>` + prop + `${close}<br>`;
+        commandStr += `<span style="${green}">` + count + `.${close} <span id=command${count}>` + prop;
+        if(Object.hasOwn(jobs[prop], 'extraText')) {
+            commandStr += " " + jobs[prop].extraText;
+        }
+        commandStr += `${close}<br>`
         count += 1;
     }
     let helpStr = welcome + `Welcome to my (terminal) website, where no terminal emulation libraries are allowed. In fact, no Xterm, React, Angular, Vue, Bootstrap, Lodash, etc. Just pure, vanilla JavaScript ... unless you're an employer, in which case I used all of the above (and if you're a lawyer, I didn't actually) :) I will admit I used a bit of jQuery, but does that count?<br><br> Here you can play games, look at projects \
