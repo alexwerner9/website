@@ -2,20 +2,35 @@ let testingString = "Please wait for story to load..."
 let article = ""
 let currentLetter = 0;
 let blockTyping = false;
+let blockLoading = false;
 let charsTyped = 0;
 let timer = 60.0;
 let timeup = false;
 let started = false;
+let highScore = 0;
 
 function typingtestEntry() {
+    highScore = getCookie('typingHighscore'); 
+    if(!highScore) {
+        document.cookie = "highScore=0"
+        highScore = 0;
+    } else {
+        highScore = parseInt(highScore);
+    }
+    console.log(blurbs.length)
     article = blurbs[Math.floor(Math.random()*blurbs.length)]
     testingString = article[1];
     updatePrompt("Start typing to start test (use the back button to go to the home page)")
     document.addEventListener('keydown', (event) => typingtestKey(event.key));
-    consoleLog(`Characters typed: <span id="charstyped">${charsTyped}</span><br>Timer: <span id="timer">${timer}</span><br><span id="typingtest" class="typed"><span id="nottyped">${testingString}</span></span>`)
+    consoleLog(`Characters typed: <span id="charstyped">${charsTyped}</span><span id="highScore">  High score: <span style='background-color: blue'>${highScore}</span></span><br>Timer: <span id="timer">${timer}</span><br><span id="typingtest" class="typed"><span id="nottyped">${testingString}</span></span>`)
 
     const i = setInterval(() => {
         if(timer <= 0.1) {
+            console.log(charsTyped, highScore)
+            if(charsTyped > highScore) {
+                document.cookie = "typingHighscore=" + charsTyped;
+                $('#highScore').text('  ' + charsTyped);
+            }
             timeup = true;
             clearInterval(i)
             $("#input").text('')
@@ -38,7 +53,7 @@ function typingtestEntry() {
 }
 
 function endTest() {
-    builtStr = `You typed ${charsTyped} characters! Please choose from the following:<br><br>1. <span id="option1">Exit</span><br><span id="option2">2. Play again</span><br><span id="option3">3. View this Wikipedia article</span>`
+    builtStr = `You typed <span style='background-color: blue'>${charsTyped}</span> characters! Your high score is <span style='background-color: blue'>${highScore}</span>. <br><br> Please choose from the following:<br><br>1. <span id="option1">Exit</span><br><span id="option2">2. Play again</span><br><span id="option3">3. View Wikipedia article: ("${article[0].replaceAll('_', ' ')}")</span>`
     consoleLog(builtStr, cb=registerOptions);
 }
 
@@ -95,9 +110,11 @@ function typingtestKey(key) {
         if(key == ' ') {
             $('#input').text('')
         }
-        if(nottyped.innerHTML.length < 100) {
+        if(nottyped.innerHTML.length < 100 && !blockLoading) {
+            blockLoading = true;
             article = blurbs[Math.floor(Math.random()*blurbs.length)]
             testingString += "<br>" + article[1];
+            setTimeout(() => blockLoading = false, 1500);
         }
     }
 }
