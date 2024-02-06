@@ -4,7 +4,7 @@ let currentLetter = 0;
 let blockTyping = false;
 let blockLoading = false;
 let charsTyped = 0;
-let timer = 60.0;
+let timer = 120.0;
 let timeup = false;
 let started = false;
 let highScore = 0;
@@ -30,6 +30,7 @@ function typingtestEntry() {
             if(charsTyped > highScore) {
                 document.cookie = "typingHighscore=" + charsTyped;
                 $('#highScore').text('  ' + charsTyped);
+                highScore = charsTyped
             }
             timeup = true;
             clearInterval(i)
