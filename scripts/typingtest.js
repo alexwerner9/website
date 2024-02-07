@@ -9,6 +9,10 @@ let timeup = false;
 let started = false;
 let highScore = 0;
 
+let nottyped = "Please wait for story to load..."
+let correctlytyped = ""
+let incorrectlytyped = ""
+
 function typingtestEntry() {
     highScore = getCookie('typingHighscore'); 
     if(!highScore) {
@@ -19,10 +23,18 @@ function typingtestEntry() {
     }
     console.log(blurbs.length)
     article = blurbs[Math.floor(Math.random()*blurbs.length)]
-    testingString = article[1];
+    nottyped = article[1]
+    nottyped = 'this is not typed'
     updatePrompt("Start typing to start test (use the back button to go to the home page)")
     document.addEventListener('keydown', (event) => typingtestKey(event.key));
-    consoleLog(`Characters typed: <span id="charstyped">${charsTyped}</span><span id="highScore">  High score: <span style='background-color: blue'>${highScore}</span></span><br>Timer: <span id="timer">${timer}</span><br><span id="typingtest" class="typed"><span id="nottyped">${testingString}</span></span>`)
+    consoleLog(`Characters typed: 
+                    <span id="charstyped">${charsTyped}</span>
+                    <span id="highScore">  High score: <span style='background-color: blue'>${highScore}</span>
+                    </span>
+                    <br>
+                    Timer: <span id="timer">${timer}</span>
+                    <br>
+                    <span id="correctlytyped" class="typed"></span><span id="incorrectlytyped" style="background-color: red;"></span><span id="nottyped">${nottyped}</span></span>`.replaceAll('\n', ''))
 
     const i = setInterval(() => {
         if(timer <= 0.1) {
@@ -54,7 +66,16 @@ function typingtestEntry() {
 }
 
 function endTest() {
-    builtStr = `You typed <span style='background-color: blue'>${charsTyped}</span> characters! Your high score is <span style='background-color: blue'>${highScore}</span>. <br><br> Please choose from the following:<br><br>1. <span id="option1">Exit</span><br><span id="option2">2. Play again</span><br><span id="option3">3. View Wikipedia article: ("${article[0].replaceAll('_', ' ')}")</span>`
+    builtStr = `You typed <span style='background-color: blue'>${charsTyped}</span> characters! 
+                Your high score is <span style='background-color: blue'>${highScore}</span>. 
+                <br><br>
+                
+                Please choose from the following:
+                <br><br>
+                
+                1. <span id="option1">Exit</span><br>
+                2. <span id="option2">Play again</span><br>
+                3. <span id="option3">View Wikipedia article: ("${article[0].replaceAll('_', ' ')}")</span>`
     consoleLog(builtStr, cb=registerOptions);
 }
 
@@ -97,25 +118,44 @@ function typingtestKey(key) {
         }
         return;
     }
+    if(key == 'Shift' || key == 'Control' || key == 'Alt') {
+        return;
+    }
     $("#input").text('')
-    const nottyped = $('#nottyped')[0]
-    if(nottyped.innerHTML[0] == key || (key == 'Enter' && nottyped.innerHTML.slice(0, 4) == '<br>')) {
+    if(key == 'Backspace') {
+        if($('#incorrectlytyped')[0].innerHTML.length) {
+            nottyped = incorrectlytyped.slice(incorrectlytyped.length-1, incorrectlytyped.length) + nottyped;
+            incorrectlytyped = incorrectlytyped.slice(0, incorrectlytyped.length-1);
+            $('#incorrectlytyped')[0].innerHTML = incorrectlytyped;
+            $('#nottyped')[0].innerHTML = nottyped;
+        }
+        return;
+    }
+    if(!incorrectlytyped.length && (nottyped[0] == key || (key == 'Enter' && nottyped.slice(0, 4) == '<br>'))) {
         if(key == 'Enter') {
-            currentLetter += 4;
+            correctlytyped += nottyped.slice(0,4)
+            nottyped = nottyped.slice(4)
         } else {
-            currentLetter += 1;
+            correctlytyped += nottyped.slice(0,1);
+            nottyped = nottyped.slice(1)
         }
         charsTyped += 1;
-        $('#charstyped')[0].innerHTML = charsTyped;
-        $('#typingtest')[0].innerHTML = testingString.slice(0, currentLetter) + `<span id="nottyped">` + testingString.slice(currentLetter)
-        if(key == ' ') {
-            $('#input').text('')
-        }
-        if(nottyped.innerHTML.length < 100 && !blockLoading) {
+
+        if($('#nottyped')[0].innerHTML.length < 100 && !blockLoading) {
             blockLoading = true;
             article = blurbs[Math.floor(Math.random()*blurbs.length)]
-            testingString += "<br>" + article[1];
+            nottyped += " ---- " + article[1];
             setTimeout(() => blockLoading = false, 1500);
         }
+
+        $('#correctlytyped')[0].innerHTML = correctlytyped
+        $('#nottyped')[0].innerHTML = nottyped
+        $('#charstyped')[0].innerHTML = charsTyped
+
+    } else {
+        incorrectlytyped += nottyped.slice(0,1);
+        nottyped = nottyped.slice(1);
+        $('#incorrectlytyped')[0].innerHTML = incorrectlytyped
+        $('#nottyped')[0].innerHTML = nottyped
     }
 }
