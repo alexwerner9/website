@@ -72,14 +72,15 @@ function endTest() {
                 Please choose from the following:
                 <br><br>
                 
-                1. <span id="option1">Exit</span><br>
-                2. <span id="option2">Play again</span><br>
-                3. <span id="option3">View Wikipedia article: ("${article[0].replaceAll('_', ' ')}")</span>`
+                <span style="color: green">1.</span> <span id="option1">Exit</span><br>
+                <span style="color: green">2.</span> <span id="option2">Play again</span><br>
+                <span style="color: green">3.</span> <span id="option3">View Wikipedia article: ("${article[0].replaceAll('_', ' ')}")</span><br>
+                <span style="color: green">4.</span> <span id="option4">My inspiration</span>`
     consoleLog(builtStr, cb=registerOptions);
 }
 
 function registerOptions() {
-    for(let i = 1; i < 4; i++) {
+    for(let i = 1; i < 5; i++) {
         $("#option"+i)[0].addEventListener("mouseover", (event) => {
             event.target.classList.add('hoverlink');
         });
@@ -102,6 +103,12 @@ function typingtestHandler(input) {
             location.reload();
         } else if(input == 3) {
             window.open('https://en.wikipedia.org/wiki/'+article[0], '_blank');
+        } else if (input == 4) {
+            let builtStr = ""
+            for(let i = 0; i < 500; i++) {
+                builtStr += `<span style="color: rgb(${(i*15) % 255},${(2*i) % 255},${(i*33) % 255})">Steven</span> `
+            }
+            consoleLog(builtStr, cb=endTest, animate=true, animateSpeed=200);
         }
     }
 }
