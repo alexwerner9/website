@@ -24,7 +24,6 @@ function typingtestEntry() {
     console.log(blurbs.length)
     article = blurbs[Math.floor(Math.random()*blurbs.length)]
     nottyped = article[1]
-    nottyped = 'this is not typed'
     updatePrompt("Start typing to start test (use the back button to go to the home page)")
     document.addEventListener('keydown', (event) => typingtestKey(event.key));
     consoleLog(`Characters typed: 
