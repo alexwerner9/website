@@ -78,8 +78,8 @@ function wordStreakHandleEntry() {
     [currentWords, currentDefinitions] = chooseWords();
     correctAnswer = Math.floor(Math.random() * 4);
 
-    let highScore = getCookie('highscore'); 
-    let currentStreak = getCookie('currentstreak');
+    let highScore = localStorage.getItem('highscore'); 
+    let currentStreak = localStorage.getItem('currentstreak');
     if(!currentStreak) {
         currentStreak = 0;
     } else {
@@ -87,7 +87,7 @@ function wordStreakHandleEntry() {
     }
     let buildStr = `Current streak: <span style="${backBlue}${white}" id="currentstreak">${streak}${close}.`
     if(highScore) {
-        buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
+        buildStr += ` High score: <span style="${backBlue}${white}">${highScore}${close}<br>`
     } else {
         buildStr += `<br>`
     }
@@ -118,9 +118,9 @@ function handleAnswer(input, fromclick=false) {
     }
     if(input == lets[correctAnswer]) {
         streak += 1;
-        highScore = getCookie('highscore')
+        highScore = localStorage.getItem('highscore')
         if(!highScore || highScore < streak) {
-            document.cookie = 'highscore=' + streak;
+            localStorage.setItem('highscore', streak);
         }
         correct = true;
         updatePrompt("Press any key to continue")
@@ -129,7 +129,7 @@ function handleAnswer(input, fromclick=false) {
         updatePrompt("Press any key to continue")
     }
     let rightOrWrong = correct ? backGreen : backRed;
-    document.cookie = 'currentstreak=' + streak;
+    localStorage.setItem('currentstreak', streak);
     if(fromclick) {
         $("#word"+correctAnswer)[0].style['background-color'] = correct ? 'green' : 'red';
         $("#currentstreak")[0].style['background-color'] = correct ? 'blue' : 'red';
@@ -140,10 +140,10 @@ function handleAnswer(input, fromclick=false) {
         }, correct ? 250 : 1200);
         return;
     }
-    highScore = getCookie('highscore'); 
+    highScore = localStorage.getItem('highscore'); 
     let buildStr = `Current streak: <span style="${backBlue}${white}" id="currentstreak">${streak}${close}.`
     if(highScore) {
-        buildStr += ` High score: <span style="${backBlue}${white}">${getCookie('highscore')}${close}<br>`
+        buildStr += ` High score: <span style="${backBlue}${white}">${highScore}${close}<br>`
     } else {
         buildStr += `<br>`
     }

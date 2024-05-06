@@ -294,11 +294,12 @@ fileSelector.addEventListener('change', (event) => {
 })
 
 function asciiEntry() {
-    consoleLog('');
+    consoleLog('This will create an ascii art version of your favorite photo and print it here! Although, you should probably choose a small image ... Press enter to continue.');
     updatePrompt("Press enter to choose file to ascii-fy");
 }
 
 function displayAscii(img) {
+    consoleLog('')
     const canvas = document.createElement('canvas');
     canvas.width = img.width;
     canvas.height = img.height;
@@ -307,9 +308,11 @@ function displayAscii(img) {
     const ctx = canvas.getContext('2d', willReadFrequently=true);
     let buildStr = ""
 
+    const iter = Math.ceil(Math.max(img.height, img.width) / 400)
+
     const range = ['&nbsp;', '.', ':', '-', '=', '+','*', '#', '%', '@']
-    for(let y = 0; y < canvas.height; y++) {
-        for(let x = 0; x < canvas.width; x++) {
+    for(let y = 0; y < canvas.height; y += iter) {
+        for(let x = 0; x < canvas.width; x += iter) {
             const imgData = ctx.getImageData(x, y, 1, 1).data;
             let weight = imgData[0]+imgData[1]+imgData[2];
             weight /= (255*3);
@@ -322,9 +325,9 @@ function displayAscii(img) {
     const el = $("#main")[0];
     oldFont = window.getComputedStyle(el, null).getPropertyValue('font-size');
     const height = window.innerHeight * 0.8;
-    const fontSize = height / canvas.height < 1 ? 1 : height / canvas.height;
+    const fontSize = height / canvas.height * iter < 1 ? 1 : height / canvas.height * iter;
     el.style.fontSize = fontSize + "px";
-    consoleLog(buildStr, animate=false);
+    consoleLog(buildStr, null, false);
 }
 
 function asciiInput(input) {

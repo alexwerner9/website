@@ -1,1 +1,84 @@
-../wordstreak/index.html
+<head>
+    <title>Alex Werner</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background-color: black;
+            padding: 0;
+            margin: 0;
+        }
+        div {
+            font-family: 'Courier New', Courier, monospace; 
+            color: white;
+            padding: 0;
+            margin: 0;
+            font-size: 20px;
+            padding: 0;
+            margin: 0;
+        }
+        @media only screen and (max-width: 600px) {
+            div {
+                font-size: 17px;
+            }
+            #terminal {
+                display: none;
+            }
+        }
+        #terminal {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: blue;
+            padding: 0;
+            margin: 0;
+        }
+        #main {
+            max-height: 100%;
+            overflow-y: scroll;
+            overflow-y: scroll;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        }
+        #main::-webkit-scrollbar { /* WebKit */
+            width: 0;
+            height: 0;
+        }
+        .hoverlink {
+            background-color: white;
+            color: black;
+            cursor: pointer;
+        }
+        #nottyped {
+            color: gray;
+            background-color: black;
+        }
+        .typed {
+            background-color: green;
+        }
+        #charstyped {
+            background-color: blue;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="file-selector" accept=".jpg, .jpeg, .png", style="display: none;">
+    <img src="" id="input-image" style="display: none;">
+    <div>
+        <p id="main"></p>
+        <div id="terminal">
+            <span id="user"></span>
+            <span id="prompt"></span>
+            <span id="input"></span><span id="cursor"></span>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../scripts/words.js"></script>
+    <script type="text/javascript" src="../scripts/wordstreak.js"></script>
+    <script type="text/javascript" src="../scripts/console.js"></script>
+    <script type="text/javascript" src="../typingtest/wikidata.js"></script>
+    <script type="text/javascript" src="../scripts/typingtest.js"></script>
+    <script type="text/javascript" src="../scripts/basketball.js"></script>
+    <script type="text/javascript" src="../scripts/main.js"></script>
+</body>
