@@ -41,12 +41,6 @@ const jobs = {
         inputHandler: typingtestHandler,
         rel: true
     },
-    basketball: {
-        entryPoint: basketballEntry,
-        inputHandler: basketballHandler,
-        rel: true,
-        extraText: '(work in progress)'
-    },
     login: {
         entryPoint: usernameEntry,
         inputHandler: usernameHandler,
