@@ -49,11 +49,9 @@ let aliases = {
     '1': 'aboutme',
     '2': 'wordstreak',
     '3': 'ascii',
-    '4': 'projects',
-    '5': 'sourcecode',
-    '6': 'typingtest',
-    '7': 'basketball',
-    '8': 'login'
+    '4': 'sourcecode',
+    '5': 'typingtest',
+    '6': 'login'
 }
 
 // https://stackoverflow.com/a/11381730
@@ -74,7 +72,7 @@ const welcome = "\
 let currentPage = location.href;
 let cp = currentPage.split('/');
 currentJob = cp[cp.length-2];
-if(!['shell', 'wordstreak', 'ascii', 'aboutme', 'typingtest', 'basketball', 'login'].includes(currentJob)) {
+if(!['shell', 'wordstreak', 'ascii', 'aboutme', 'typingtest',  , 'login'].includes(currentJob)) {
     currentJob = 'shell'
 }
 let u = getCookie('username');
