@@ -28,10 +28,6 @@ const jobs = {
         inputHandler: asciiInput,
         rel: true
     },
-    projects: {
-        entryPoint: projectsEntry,
-        rel: false
-    },
     sourcecode: {
         entryPoint: sourcecodeEntry,
         rel: false
