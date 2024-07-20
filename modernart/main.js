@@ -132,3 +132,51 @@ function showNext() {
     currIndex += 1
 }
 showNext()
+
+const mainButton = document.getElementById('main-button')
+const mainWrapper = document.getElementById('wrapper')
+const timelineButton = document.getElementById('timeline-button')
+const timelineWrapper = document.getElementById('wrapper-timeline')
+mainButton.style.backgroundColor = 'rgb(75,75,75)';
+mainButton.onclick = () => {
+    timelineWrapper.style.display = 'none';
+    mainWrapper.style.display = 'flex';
+    mainButton.style.backgroundColor = 'rgb(75,75,75)';
+    timelineButton.style.backgroundColor = '#2ea44f';
+}
+timelineButton.onclick = () => {
+    mainWrapper.style.display = 'none';
+    timelineWrapper.style.display = 'block'
+    timelineButton.style.backgroundColor = 'rgb(75,75,75)';
+    mainButton.style.backgroundColor = '#2ea44f';
+}
+
+////////////////////////////////////
+
+var container = document.getElementById('timeline');
+
+const artItems = []
+let i = 0
+for(const artwork of artworks) {
+    artItems.push({
+        id: i,
+        content: artwork[0] + " - " + artwork[2] + " (" + artwork[3] + ")",
+        start: artwork[3].split('-')[0]
+    })
+    i += 1
+}
+
+// Create a DataSet (allows two way data-binding)
+var items = new vis.DataSet(artItems);
+
+// Configuration for the Timeline
+var options = {
+    height: '75%',
+    zoomKey: 'ctrlKey',
+    horizontalScroll: true,
+    min: '1760'
+};
+
+// Create a Timeline
+var timeline = new vis.Timeline(container, items, options);
+
