@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "d3": "^7.9.0",
+    "d3kit-timeline": "^2.0.1",
+    "vis": "^4.21.0-EOL",
+    "vis-timeline": "^7.7.3"
+  }
+}
