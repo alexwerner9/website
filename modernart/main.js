@@ -60,7 +60,7 @@ const artworks = [
     ['Oppenhiem', 'Swiss', 'Object: Fur Breakfast', '1936'],
     ['Margritte', 'Belgian', 'The Treachery of Images', '1929'],
     ['Dali', 'Spanish', 'The Persistence of Memory', '1931'],
-    ['Kahlo', 'Mexican', 'The Two Fridas'],
+    ['Kahlo', 'Mexican', 'The Two Fridas', '1939'],
     ['Douglas', 'American', 'From Slavery through Reconstruction', '1934'],
     ['Hopper', 'American', 'Nighthawks', '1942'],
     ['Picasso', 'Spanish', 'Guernica', '1937'],
@@ -90,8 +90,8 @@ const artworks = [
     ['Eiffel', 'French', 'Eiffel Tower', '1889'],
     ['Cezanne', 'French', 'Mont Sainte-Victoire', '1902'],
     ['Cezanne', 'French', 'Large Bathers', '1906'],
-    ['Matisse', 'French', 'Woman with the Hat (Madame Matisse)'],
-    ['Matisse', 'French', 'The Joy of Life'],
+    ['Matisse', 'French', 'Woman with the Hat (Madame Matisse)', '1905'],
+    ['Matisse', 'French', 'The Joy of Life', '1905'],
     ['Gaugin', 'French', 'Vision After the Sermon, Jacob Wrestling with the Angel', '1888'],
     ['Munch', 'Norwegian', 'The Scream', '1893'],
     ['Rodin', 'French', 'The Thinker', '1880'],
@@ -216,6 +216,7 @@ var container = document.getElementById('timeline');
 const artItems = []
 let i = 0
 for(const artwork of artworks) {
+    console.log(artwork[0])
     artItems.push({
         id: i,
         content: artwork[0] + " - " + artwork[2] + " (" + artwork[3] + ")",
