@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {
-  createBrowserRouter,
+  createHashRouter,
   RouterProvider,
 } from "react-router-dom";
 import { Homepage } from './Homepage/Homepage';
@@ -14,7 +14,7 @@ import { Wordstreak } from './Games/Wordstreak';
 import { Geodistance } from './Games/Geodistance';
 import { About } from './About/About';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Homepage />,
