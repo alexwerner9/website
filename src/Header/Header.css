@@ -1,0 +1,8 @@
+#header {
+    width: 100%;
+    height: fit-content;
+    background-color: var(--tan);
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0.8rem;
+}

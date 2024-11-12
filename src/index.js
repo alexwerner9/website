@@ -1,13 +1,45 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+import { Homepage } from './Homepage/Homepage';
+import { Games } from './Games/Games';
+import 'semantic-ui-css/semantic.min.css'
+import "./index.css";
+import { Wordstreak } from './Games/Wordstreak';
+import { Geodistance } from './Games/Geodistance';
+import { About } from './About/About';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Homepage />,
+  },
+  {
+    path: "/games",
+    element: <Games />
+  },
+  {
+    path: "/games/wordstreak",
+    element: <Wordstreak />
+  },
+  {
+    path: "/games/geodistance",
+    element: <Geodistance />
+  },
+  {
+    path: "/about",
+    element: <About />
+  }
+]);
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    HELLO
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 
