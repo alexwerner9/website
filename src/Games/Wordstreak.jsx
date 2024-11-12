@@ -10,8 +10,8 @@ export const Wordstreak = props => {
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [isCorrect, setIsCorrect] = useState(false)
     const [isWrong, setIsWrong] = useState(false)
-    const [currStreak, setCurrStreak] = useState(localStorage.getItem('wordstreak-curr') ? localStorage.getItem('wordstreak-curr') : 0)
-    const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('wordstreak-record') ? localStorage.getItem('wordstreak-record') : 0)
+    const [currStreak, setCurrStreak] = useState(localStorage.getItem('wordstreak-curr') ? parseInt(localStorage.getItem('wordstreak-curr')) : 0)
+    const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('wordstreak-record') ? parseInt(localStorage.getItem('wordstreak-record')) : 0)
     const navigate = useNavigate()
 
     function longestCommonSubstring(str1, str2) {
@@ -98,16 +98,17 @@ export const Wordstreak = props => {
     }
 
     useEffect(() => {
-        if (currStreak >= 0) {
-            if (currStreak > personalRecord) {
-                setPersonalRecord(currStreak)
-                localStorage.setItem('wordstreak-record', currStreak + 1)
-            }
-            localStorage.setItem('wordstreak-curr', currStreak)
+        if (currStreak > personalRecord) {
+            setPersonalRecord(currStreak)
+            localStorage.setItem('wordstreak-record', currStreak)
         }
+        localStorage.setItem('wordstreak-curr', currStreak)
     }, [currStreak])
 
     useEffect(() => {
+        if(!localStorage.getItem('wordstreak-record')) {
+            localStorage.setItem('wordstreak-record', 0)
+        }
         chooseWords()
     }, [])
 
