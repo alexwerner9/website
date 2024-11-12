@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/alexwerner9.github.io/static/css/main.98fd61c4.css",
-    "main.js": "/alexwerner9.github.io/static/js/main.aa1a9fa4.js",
+    "main.js": "/alexwerner9.github.io/static/js/main.fd05708b.js",
     "static/js/453.bb828c5d.chunk.js": "/alexwerner9.github.io/static/js/453.bb828c5d.chunk.js",
     "static/media/brand-icons.svg": "/alexwerner9.github.io/static/media/brand-icons.6729d29753e000c17489.svg",
     "static/media/icons.svg": "/alexwerner9.github.io/static/media/icons.62d9dae4e0040e81c980.svg",
@@ -22,11 +22,11 @@
     "static/media/logo.svg": "/alexwerner9.github.io/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/alexwerner9.github.io/index.html",
     "main.98fd61c4.css.map": "/alexwerner9.github.io/static/css/main.98fd61c4.css.map",
-    "main.aa1a9fa4.js.map": "/alexwerner9.github.io/static/js/main.aa1a9fa4.js.map",
+    "main.fd05708b.js.map": "/alexwerner9.github.io/static/js/main.fd05708b.js.map",
     "453.bb828c5d.chunk.js.map": "/alexwerner9.github.io/static/js/453.bb828c5d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.98fd61c4.css",
-    "static/js/main.aa1a9fa4.js"
+    "static/js/main.fd05708b.js"
   ]
 }
