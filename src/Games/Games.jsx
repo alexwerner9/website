@@ -1,4 +1,3 @@
-import { Header } from "../Header/Header"
 import { Button } from "semantic-ui-react"
 import { useNavigate } from "react-router-dom"
 

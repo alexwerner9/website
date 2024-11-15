@@ -8,7 +8,6 @@ export const Wordstreak = props => {
     const [definitions, setDefinitions] = useState([])
     const [correctIndex, setCorrectIndex] = useState(0)
     const [selectedIndex, setSelectedIndex] = useState(-1)
-    const [isCorrect, setIsCorrect] = useState(false)
     const [isWrong, setIsWrong] = useState(false)
     const [currStreak, setCurrStreak] = useState(localStorage.getItem('wordstreak-curr') ? parseInt(localStorage.getItem('wordstreak-curr')) : 0)
     const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('wordstreak-record') ? parseInt(localStorage.getItem('wordstreak-record')) : 0)
@@ -62,7 +61,7 @@ export const Wordstreak = props => {
             const newWord = randomProperty(words);
             const newWordDef = words[newWord].definition;
             const newWordType = words[newWord].type;
-            if (newWord.length < 5 || longestCommonSubstring(newWord.toLowerCase(), newWordDef.toLowerCase()).length > 4 || newWordType != firstWordType) {
+            if (newWord.length < 5 || longestCommonSubstring(newWord.toLowerCase(), newWordDef.toLowerCase()).length > 4 || newWordType !== firstWordType) {
                 continue
             }
             foundWords.push(newWord);
@@ -76,22 +75,19 @@ export const Wordstreak = props => {
 
     function makeSelection(index) {
         setSelectedIndex(index)
-        if (index == correctIndex) {
+        if (index === correctIndex) {
             setIsWrong(false)
-            setIsCorrect(true)
             setCurrStreak(currStreak + 1)
             if (currStreak + 1 > personalRecord) {
                 setPersonalRecord(currStreak + 1)
                 localStorage.setItem('wordstreak-record', currStreak + 1)
             }
         } else {
-            setIsCorrect(false)
             setIsWrong(true)
             setCurrStreak(0)
         }
         setTimeout(() => {
             setIsWrong(false)
-            setIsCorrect(false)
             setSelectedIndex(-1)
             chooseWords()
         }, [750])
@@ -123,8 +119,8 @@ export const Wordstreak = props => {
                         width: "90%",
                         fontSize: "1rem",
                         textAlign: "left",
-                        color: selectedIndex != -1 && (index == selectedIndex || index == correctIndex) ? "black" : "",
-                        backgroundColor: isWrong && index == selectedIndex ? "red" : selectedIndex != -1 && index == correctIndex ? "green" : "var(--tan)"
+                        color: selectedIndex !== -1 && (index === selectedIndex || index === correctIndex) ? "black" : "",
+                        backgroundColor: isWrong && index === selectedIndex ? "red" : selectedIndex !== -1 && index === correctIndex ? "green" : "var(--tan)"
                     }}
                     key={index}>{index + 1 + ". " + definition}</Button>
             })}

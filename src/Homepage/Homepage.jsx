@@ -1,11 +1,6 @@
-import { Header } from "../Header/Header"
 import { Button } from "semantic-ui-react"
 import { useNavigate } from "react-router-dom"
 import './Homepage.css'
-
-const HomepageButton = props => {
-    return <Button className="homepage-button" {...props}>{props.children}</Button>
-}
 
 export const Homepage = props => {
 

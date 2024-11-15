@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {
   createHashRouter,
@@ -13,6 +12,7 @@ import "./index.css";
 import { Wordstreak } from './Games/Wordstreak';
 import { Geodistance } from './Games/Geodistance';
 import { About } from './About/About';
+import { Timelines } from './Games/Timelines';
 
 const router = createHashRouter([
   {
@@ -30,6 +30,10 @@ const router = createHashRouter([
   {
     path: "/games/geodistance",
     element: <Geodistance />
+  },
+  {
+    path: "/games/timelines",
+    element: <Timelines />
   },
   {
     path: "/about",
