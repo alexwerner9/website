@@ -108,8 +108,7 @@ export const Timelines = props => {
                         textAlign: "left",
                         color: selectedIndex !== -1 && (index === selectedIndex || index === correctIndex) ? "black" : "",
                         backgroundColor: isWrong && index === selectedIndex ? "red" : selectedIndex !== -1 && index === correctIndex ? "green" : "var(--tan)"
-                    }}
-                    key={index}>
+                    }}>
                     {index + 1 + ". " + choice.content + " "}
                     <span
                         style={{

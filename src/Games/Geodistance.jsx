@@ -52,6 +52,7 @@ export const Geodistance = props => {
         let numFound = 0;
         while (numFound < 4) {
             const choice = randomItem(countries)
+            console.log(choice.COUNTRY, choice.COUNTRYAFF, choice.COUNTRY == choice.COUNTRYAFF)
             if (!choices.some((c) => c.COUNTRY === choice.COUNTRY) && choice.COUNTRY == choice.COUNTRYAFF) {
                 choices.push(choice)
                 numFound++;
