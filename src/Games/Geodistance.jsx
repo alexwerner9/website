@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Button, Modal, ModalContent } from "semantic-ui-react";
+import { Button, Modal, ModalContent, DimmerDimmable } from "semantic-ui-react";
 import { countries } from "./countries";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet'
+import { Leaderboard, LeaderboardModal } from "./Leaderboard.jsx";
 import './Games.css'
 
 export const Geodistance = props => {
@@ -14,6 +15,9 @@ export const Geodistance = props => {
     const [currStreak, setCurrStreak] = useState(localStorage.getItem('geodistance-curr') ? parseInt(localStorage.getItem('geodistance-curr')) : 0)
     const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('geodistance-record') ? parseInt(localStorage.getItem('geodistance-record')) : 0)
     const [showingMap, setShowingMap] = useState(false)
+    const [showingLeaderboard, setShowingLeaderboard] = useState(false)
+    const [refresh, setRefresh] = useState(false)
+    const [showingModal, setShowingModal] = useState(false)
     const navigate = useNavigate()
 
     function distance(countryA, countryB) {
@@ -48,7 +52,7 @@ export const Geodistance = props => {
         let numFound = 0;
         while (numFound < 4) {
             const choice = randomItem(countries)
-            if (!choices.some((c) => c.COUNTRY === choice.COUNTRY)) {
+            if (!choices.some((c) => c.COUNTRY === choice.COUNTRY) && choice.COUNTRY == choice.COUNTRYAFF) {
                 choices.push(choice)
                 numFound++;
             }
@@ -79,7 +83,7 @@ export const Geodistance = props => {
             }
         } else {
             setIsWrong(true)
-            setCurrStreak(0)
+            setShowingModal(true)
         }
     }
 
@@ -100,7 +104,20 @@ export const Geodistance = props => {
         chooseCountry()
     }, [])
 
-    return <div className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
+    function restart() {
+        setCurrStreak(0)
+        setIsWrong(false)
+        chooseCountry()
+        setSelectedIndex(-1)
+        setShowingModal(false)
+    }
+
+    return <DimmerDimmable dimmed={showingLeaderboard} as='div' className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
+        <Leaderboard showingLeaderboard={showingLeaderboard}
+            game='geodistance'
+            refresh={refresh}
+            setShowingLeaderboard={setShowingLeaderboard}></Leaderboard>
+        <LeaderboardModal restart={restart} storageKey='geodistance-curr' game='geodistance' setRefresh={setRefresh} refresh={refresh} showingModal={showingModal} />
         <Modal open={showingMap}>
             <ModalContent style={{ backgroundColor: "rgba(0,0,0,.5)" }}><div style={{ height: "75vh" }}>
                 <MapContainer center={position} zoom={1.5} scrollWheelZoom={true} style={{ height: "100%" }}>
@@ -154,6 +171,7 @@ export const Geodistance = props => {
         </div>
 
         <Button style={{ display: selectedIndex === -1 ? "none" : "", backgroundColor: "lightgreen", fontSize: "1rem" }} onClick={() => { setShowingMap(true) }}>Show map</Button>
-    </div>
+        <Button style={{ fontSize: "1rem" }} onClick={() => { setShowingLeaderboard(true) }}>View leaderboard</Button>
+    </DimmerDimmable>
 
 }

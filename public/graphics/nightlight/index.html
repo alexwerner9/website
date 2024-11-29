@@ -1,0 +1,793 @@
+<body bgcolor='rgb(0,0,20)'>
+<center>
+<canvas id='canvas1' width=540 height=540></canvas>
+
+<script>
+
+/*
+ * A speed-improved perlin and simplex noise algorithms for 2D.
+ *
+ * Based on example code by Stefan Gustavson (stegu@itn.liu.se).
+ * Optimisations by Peter Eastman (peastman@drizzle.stanford.edu).
+ * Better rank ordering method by Stefan Gustavson in 2012.
+ * Converted to Javascript by Joseph Gentle.
+ *
+ * Version 2012-03-09
+ *
+ * This code was placed in the public domain by its original author,
+ * Stefan Gustavson. You may use it as you see fit, but
+ * attribution is appreciated.
+ *
+ */
+
+ (function(global){
+  var module = global.noise = {};
+
+  function Grad(x, y, z) {
+    this.x = x; this.y = y; this.z = z;
+  }
+  
+  Grad.prototype.dot2 = function(x, y) {
+    return this.x*x + this.y*y;
+  };
+
+  Grad.prototype.dot3 = function(x, y, z) {
+    return this.x*x + this.y*y + this.z*z;
+  };
+
+  var grad3 = [new Grad(1,1,0),new Grad(-1,1,0),new Grad(1,-1,0),new Grad(-1,-1,0),
+               new Grad(1,0,1),new Grad(-1,0,1),new Grad(1,0,-1),new Grad(-1,0,-1),
+               new Grad(0,1,1),new Grad(0,-1,1),new Grad(0,1,-1),new Grad(0,-1,-1)];
+
+  var p = [151,160,137,91,90,15,
+  131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
+  190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
+  88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
+  77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
+  102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
+  135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
+  5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
+  223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
+  129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
+  251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
+  49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+  138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+  // To remove the need for index wrapping, double the permutation table length
+  var perm = new Array(512);
+  var gradP = new Array(512);
+
+  // This isn't a very good seeding function, but it works ok. It supports 2^16
+  // different seed values. Write something better if you need more seeds.
+  module.seed = function(seed) {
+    if(seed > 0 && seed < 1) {
+      // Scale the seed out
+      seed *= 65536;
+    }
+
+    seed = Math.floor(seed);
+    if(seed < 256) {
+      seed |= seed << 8;
+    }
+
+    for(var i = 0; i < 256; i++) {
+      var v;
+      if (i & 1) {
+        v = p[i] ^ (seed & 255);
+      } else {
+        v = p[i] ^ ((seed>>8) & 255);
+      }
+
+      perm[i] = perm[i + 256] = v;
+      gradP[i] = gradP[i + 256] = grad3[v % 12];
+    }
+  };
+
+  module.seed(0);
+
+  /*
+  for(var i=0; i<256; i++) {
+    perm[i] = perm[i + 256] = p[i];
+    gradP[i] = gradP[i + 256] = grad3[perm[i] % 12];
+  }*/
+
+  // Skewing and unskewing factors for 2, 3, and 4 dimensions
+  var F2 = 0.5*(Math.sqrt(3)-1);
+  var G2 = (3-Math.sqrt(3))/6;
+
+  var F3 = 1/3;
+  var G3 = 1/6;
+
+  // 2D simplex noise
+  module.simplex2 = function(xin, yin) {
+    var n0, n1, n2; // Noise contributions from the three corners
+    // Skew the input space to determine which simplex cell we're in
+    var s = (xin+yin)*F2; // Hairy factor for 2D
+    var i = Math.floor(xin+s);
+    var j = Math.floor(yin+s);
+    var t = (i+j)*G2;
+    var x0 = xin-i+t; // The x,y distances from the cell origin, unskewed.
+    var y0 = yin-j+t;
+    // For the 2D case, the simplex shape is an equilateral triangle.
+    // Determine which simplex we are in.
+    var i1, j1; // Offsets for second (middle) corner of simplex in (i,j) coords
+    if(x0>y0) { // lower triangle, XY order: (0,0)->(1,0)->(1,1)
+      i1=1; j1=0;
+    } else {    // upper triangle, YX order: (0,0)->(0,1)->(1,1)
+      i1=0; j1=1;
+    }
+    // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
+    // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
+    // c = (3-sqrt(3))/6
+    var x1 = x0 - i1 + G2; // Offsets for middle corner in (x,y) unskewed coords
+    var y1 = y0 - j1 + G2;
+    var x2 = x0 - 1 + 2 * G2; // Offsets for last corner in (x,y) unskewed coords
+    var y2 = y0 - 1 + 2 * G2;
+    // Work out the hashed gradient indices of the three simplex corners
+    i &= 255;
+    j &= 255;
+    var gi0 = gradP[i+perm[j]];
+    var gi1 = gradP[i+i1+perm[j+j1]];
+    var gi2 = gradP[i+1+perm[j+1]];
+    // Calculate the contribution from the three corners
+    var t0 = 0.5 - x0*x0-y0*y0;
+    if(t0<0) {
+      n0 = 0;
+    } else {
+      t0 *= t0;
+      n0 = t0 * t0 * gi0.dot2(x0, y0);  // (x,y) of grad3 used for 2D gradient
+    }
+    var t1 = 0.5 - x1*x1-y1*y1;
+    if(t1<0) {
+      n1 = 0;
+    } else {
+      t1 *= t1;
+      n1 = t1 * t1 * gi1.dot2(x1, y1);
+    }
+    var t2 = 0.5 - x2*x2-y2*y2;
+    if(t2<0) {
+      n2 = 0;
+    } else {
+      t2 *= t2;
+      n2 = t2 * t2 * gi2.dot2(x2, y2);
+    }
+    // Add contributions from each corner to get the final noise value.
+    // The result is scaled to return values in the interval [-1,1].
+    return 70 * (n0 + n1 + n2);
+  };
+
+  // 3D simplex noise
+  module.simplex3 = function(xin, yin, zin) {
+    var n0, n1, n2, n3; // Noise contributions from the four corners
+
+    // Skew the input space to determine which simplex cell we're in
+    var s = (xin+yin+zin)*F3; // Hairy factor for 2D
+    var i = Math.floor(xin+s);
+    var j = Math.floor(yin+s);
+    var k = Math.floor(zin+s);
+
+    var t = (i+j+k)*G3;
+    var x0 = xin-i+t; // The x,y distances from the cell origin, unskewed.
+    var y0 = yin-j+t;
+    var z0 = zin-k+t;
+
+    // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
+    // Determine which simplex we are in.
+    var i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
+    var i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
+    if(x0 >= y0) {
+      if(y0 >= z0)      { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; }
+      else if(x0 >= z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; }
+      else              { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }
+    } else {
+      if(y0 < z0)      { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; }
+      else if(x0 < z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; }
+      else             { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; }
+    }
+    // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
+    // a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
+    // a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
+    // c = 1/6.
+    var x1 = x0 - i1 + G3; // Offsets for second corner
+    var y1 = y0 - j1 + G3;
+    var z1 = z0 - k1 + G3;
+
+    var x2 = x0 - i2 + 2 * G3; // Offsets for third corner
+    var y2 = y0 - j2 + 2 * G3;
+    var z2 = z0 - k2 + 2 * G3;
+
+    var x3 = x0 - 1 + 3 * G3; // Offsets for fourth corner
+    var y3 = y0 - 1 + 3 * G3;
+    var z3 = z0 - 1 + 3 * G3;
+
+    // Work out the hashed gradient indices of the four simplex corners
+    i &= 255;
+    j &= 255;
+    k &= 255;
+    var gi0 = gradP[i+   perm[j+   perm[k   ]]];
+    var gi1 = gradP[i+i1+perm[j+j1+perm[k+k1]]];
+    var gi2 = gradP[i+i2+perm[j+j2+perm[k+k2]]];
+    var gi3 = gradP[i+ 1+perm[j+ 1+perm[k+ 1]]];
+
+    // Calculate the contribution from the four corners
+    var t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
+    if(t0<0) {
+      n0 = 0;
+    } else {
+      t0 *= t0;
+      n0 = t0 * t0 * gi0.dot3(x0, y0, z0);  // (x,y) of grad3 used for 2D gradient
+    }
+    var t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+    if(t1<0) {
+      n1 = 0;
+    } else {
+      t1 *= t1;
+      n1 = t1 * t1 * gi1.dot3(x1, y1, z1);
+    }
+    var t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
+    if(t2<0) {
+      n2 = 0;
+    } else {
+      t2 *= t2;
+      n2 = t2 * t2 * gi2.dot3(x2, y2, z2);
+    }
+    var t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
+    if(t3<0) {
+      n3 = 0;
+    } else {
+      t3 *= t3;
+      n3 = t3 * t3 * gi3.dot3(x3, y3, z3);
+    }
+    // Add contributions from each corner to get the final noise value.
+    // The result is scaled to return values in the interval [-1,1].
+    return 32 * (n0 + n1 + n2 + n3);
+
+  };
+
+  // ##### Perlin noise stuff
+
+  function fade(t) {
+    return t*t*t*(t*(t*6-15)+10);
+  }
+
+  function lerp(a, b, t) {
+    return (1-t)*a + t*b;
+  }
+
+  // 2D Perlin Noise
+  module.perlin2 = function(x, y) {
+    // Find unit grid cell containing point
+    var X = Math.floor(x), Y = Math.floor(y);
+    // Get relative xy coordinates of point within that cell
+    x = x - X; y = y - Y;
+    // Wrap the integer cells at 255 (smaller integer period can be introduced here)
+    X = X & 255; Y = Y & 255;
+
+    // Calculate noise contributions from each of the four corners
+    var n00 = gradP[X+perm[Y]].dot2(x, y);
+    var n01 = gradP[X+perm[Y+1]].dot2(x, y-1);
+    var n10 = gradP[X+1+perm[Y]].dot2(x-1, y);
+    var n11 = gradP[X+1+perm[Y+1]].dot2(x-1, y-1);
+
+    // Compute the fade curve value for x
+    var u = fade(x);
+
+    // Interpolate the four results
+    return lerp(
+        lerp(n00, n10, u),
+        lerp(n01, n11, u),
+       fade(y));
+  };
+
+  // 3D Perlin Noise
+  module.perlin3 = function(x, y, z) {
+    // Find unit grid cell containing point
+    var X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z);
+    // Get relative xyz coordinates of point within that cell
+    x = x - X; y = y - Y; z = z - Z;
+    // Wrap the integer cells at 255 (smaller integer period can be introduced here)
+    X = X & 255; Y = Y & 255; Z = Z & 255;
+
+    // Calculate noise contributions from each of the eight corners
+    var n000 = gradP[X+  perm[Y+  perm[Z  ]]].dot3(x,   y,     z);
+    var n001 = gradP[X+  perm[Y+  perm[Z+1]]].dot3(x,   y,   z-1);
+    var n010 = gradP[X+  perm[Y+1+perm[Z  ]]].dot3(x,   y-1,   z);
+    var n011 = gradP[X+  perm[Y+1+perm[Z+1]]].dot3(x,   y-1, z-1);
+    var n100 = gradP[X+1+perm[Y+  perm[Z  ]]].dot3(x-1,   y,   z);
+    var n101 = gradP[X+1+perm[Y+  perm[Z+1]]].dot3(x-1,   y, z-1);
+    var n110 = gradP[X+1+perm[Y+1+perm[Z  ]]].dot3(x-1, y-1,   z);
+    var n111 = gradP[X+1+perm[Y+1+perm[Z+1]]].dot3(x-1, y-1, z-1);
+
+    // Compute the fade curve value for x, y, z
+    var u = fade(x);
+    var v = fade(y);
+    var w = fade(z);
+
+    // Interpolate
+    return lerp(
+        lerp(
+          lerp(n000, n100, u),
+          lerp(n001, n101, u), w),
+        lerp(
+          lerp(n010, n110, u),
+          lerp(n011, n111, u), w),
+       v);
+  };
+
+})(this);
+
+
+let start_gl = (canvas, meshData, vertexSize, vertexShader, fragmentShader) => {
+   let gl = canvas.getContext("webgl");
+   let program = gl.createProgram();
+   gl.program = program;
+   let addshader = (type, src) => {
+      let shader = gl.createShader(type);
+      gl.shaderSource(shader, src);
+      gl.compileShader(shader);
+      if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+         throw "Cannot compile shader:\n\n" + gl.getShaderInfoLog(shader);
+      gl.attachShader(program, shader);
+   };
+   addshader(gl.VERTEX_SHADER  , vertexShader  );
+   addshader(gl.FRAGMENT_SHADER, fragmentShader);
+   gl.linkProgram(program);
+   if (! gl.getProgramParameter(program, gl.LINK_STATUS))
+      throw "Could not link the shader program!";
+   gl.useProgram(program);
+   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+   gl.enable(gl.DEPTH_TEST);
+   gl.depthFunc(gl.LEQUAL);
+   let vertexAttribute = (name, size, position) => {
+      let attr = gl.getAttribLocation(program, name);
+      gl.enableVertexAttribArray(attr);
+      gl.vertexAttribPointer(attr, size, gl.FLOAT, false, vertexSize * 4, position * 4);
+   }
+   vertexAttribute('aPos', 3, 0);
+   vertexAttribute('aNor', 3, 3);
+   return gl;
+}
+
+let r = canvas1.getBoundingClientRect(), cursor = [0,0,0];
+let setCursor = (e, z) => cursor = [ (e.clientX - r.left) / canvas1.width * 2 - 1,
+                                     1 - (e.clientY - r.top) / canvas1.height * 2,
+                                     z !== undefined ? z : cursor[2] ];
+canvas1.onmousedown = e => setCursor(e, 1);
+canvas1.onmousemove = e => setCursor(e,  );
+canvas1.onmouseup   = e => setCursor(e, 0);
+
+let mIdentity = () => [ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 ];
+
+let mInverse = m => {
+   let dst = [], det = 0, cofactor = (c, r) => {
+      let s = (i, j) => m[c+i & 3 | (r+j & 3) << 2];
+      return (c+r & 1 ? -1 : 1) * ( (s(1,1) * (s(2,2) * s(3,3) - s(3,2) * s(2,3)))
+                                  - (s(2,1) * (s(1,2) * s(3,3) - s(3,2) * s(1,3)))
+                                  + (s(3,1) * (s(1,2) * s(2,3) - s(2,2) * s(1,3))) );
+   }
+   for (let n = 0 ; n < 16 ; n++) dst.push(cofactor(n >> 2, n & 3));
+   for (let n = 0 ; n <  4 ; n++) det += m[n] * dst[n << 2]; 
+   for (let n = 0 ; n < 16 ; n++) dst[n] /= det;
+   return dst;
+}
+let matrixMultiply = (a, b) => {
+   let dst = [];
+   for (let n = 0 ; n < 16 ; n++)
+      dst.push(a[n&3]*b[n&12] + a[n&3|4]*b[n&12|1] + a[n&3|8]*b[n&12|2] + a[n&3|12]*b[n&12|3]);
+   return dst;
+}
+let mTranslate = (tx,ty,tz, m) => {
+   return matrixMultiply(m, [1,0,0,0, 0,1,0,0, 0,0,1,0, tx,ty,tz,1]);
+}
+let mRotateX = (theta, m) => {
+   let c = Math.cos(theta), s = Math.sin(theta);
+   return matrixMultiply(m, [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]);
+}
+let mRotateY = (theta, m) => {
+   let c = Math.cos(theta), s = Math.sin(theta);
+   return matrixMultiply(m, [c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1]);
+}
+let mRotateZ = (theta, m) => {
+   let c = Math.cos(theta), s = Math.sin(theta);
+   return matrixMultiply(m, [c,s,0,0, -s,c,0,0, 0,0,1,0, 0,0,0,1]);
+}
+let mScale = (sx,sy,sz, m) => {
+   return matrixMultiply(m, [sx,0,0,0, 0,sy,0,0, 0,0,sz,0, 0,0,0,1]);
+}
+let mPerspective = (fl, m) => {
+   return matrixMultiply(m, [1,0,0,0, 0,1,0,0, 0,0,1,-1/fl, 0,0,0,1]);
+}
+
+let createMesh1 = (nu, nv, p) => {
+   let mesh = [];
+   for (let j = 0 ; j < nv ; j++)
+   for (let i = 0 ; i < nu ; i++) {
+      let u = i/nu, v = j/nv;
+      let p00 = p(u     , v     );
+      let p10 = p(u+1/nu, v     );
+      let p01 = p(u     , v+1/nv);
+      let p11 = p(u+1/nu, v+1/nv);
+      mesh.push(p00, p10, p11);
+      mesh.push(p11, p01, p00);
+   }
+   return mesh.flat();
+}
+
+let cross = (A, B) => {
+   return [ A[1] * B[2] - A[2] * B[1], A[2] * B[0] - A[0] * B[2], A[0] * B[1] - A[1] * B[0] ];
+}
+
+let getP = (A) => {
+   return A.slice(0, 3);
+}
+
+let subAs = (A, B) => {
+   return [A[0] - B[0], A[1] - B[1], A[2] - B[2]];
+}
+
+let dt_normal = (nu,nv) => {
+  let mesh = [];
+  for(let i = 0; i < nu; i++) {
+      for(let j = 0; j < nv; j++) {
+         let u = i/nu, v = j/nv;
+         let p00 = [u,v,0, 0,0,-1];
+         let p10 = [u+1/nu,v,0, 0,0,-1];
+         let p01 = [u,v+1/nv,0, 0,0,-1];
+         let p11 = [u+1/nu,v+1/nv,0, 0,0,-1];
+
+         mesh.push(p00, p01, p11, p10, p00, p11);
+      }
+    }
+  return mesh.flat();
+}
+
+let dt = (nu,nv, offset) => {
+   let mesh = [];
+   for(let i = 0; i < nu; i++) {
+      for(let j = 0; j < nv; j++) {
+         let u = i/nu, v = j/nv;
+         let p00 = [u,v,0, 0,0,-1];
+         let p10 = [u+1/nu,v,0, 0,0,-1];
+         let p01 = [u,v+1/nv,0, 0,0,-1];
+         let p11 = [u+1/nu,v+1/nv,0, 0,0,-1];
+
+         let density = 4;
+         let height = 8;
+
+         p00[2] += noise.perlin3(u*density,v*density, offset)/height;
+         p10[2] += noise.perlin3((u+1/nu)*density,v*density, offset)/height;
+         p01[2] += noise.perlin3(u*density,(v+1/nv)*density, offset)/height;
+         p11[2] += noise.perlin3((u+1/nu)*density,(v+1/nv)*density, offset)/height;
+
+         let A = getP(p00);
+         let B = getP(p10);
+         let C = getP(p11);
+
+         let dir_1 = cross(subAs(B, A), subAs(C, A));
+
+         p01[3] = dir_1[0];
+         p01[4] = dir_1[1];
+         p01[5] = dir_1[2];
+
+         p11[3] = dir_1[0];
+         p11[4] = dir_1[1];
+         p11[5] = dir_1[2];
+
+         p10[3] = dir_1[0];
+         p10[4] = dir_1[1];
+         p10[5] = dir_1[2];
+
+         p00[3] = dir_1[0];
+         p00[4] = dir_1[1];
+         p00[5] = dir_1[2];
+
+         mesh.push(p00, p01, p11, p10, p00, p11);
+      }
+   }
+   return mesh.flat();
+}
+
+let createMesh = (nu, nv, p) => {
+   let mesh = [];
+   for (let j = nv ; j > 0 ; j--) {
+      for (let i = 0 ; i <= nu ; i++)
+         mesh.push(p(i/nu,j/nv), p(i/nu,j/nv - 1/nv));
+      mesh.push(p(1,j/nv-1/nv), p(0,j/nv-1/nv));
+   }
+   return mesh.flat();
+}
+
+let sphere = (nu, nv) => createMesh(nu, nv, (u,v) => {
+   let theta = 2 * Math.PI * u;
+   let phi = Math.PI * (v - .5);
+   let x = Math.cos(phi) * Math.cos(theta),
+       y = Math.cos(phi) * Math.sin(theta),
+       z = Math.sin(phi);
+   return [ x,y,z, x,y,z ];
+});
+
+let disk = (nu, nv) => createMesh(nu, nv, (u,v) => {
+   let theta = 2 * Math.PI * u;
+   let x = v * Math.cos(theta),
+       y = v * Math.sin(theta);
+   return [ x,y,0, 0,0,-1 ];
+});
+
+let torus = (nu, nv) => createMesh(nu, nv, (u,v) => {
+   let theta = 2 * Math.PI * u;
+   let phi   = 2 * Math.PI * v;
+   let ct = Math.cos(theta), cp = Math.cos(phi);
+   let st = Math.sin(theta), sp = Math.sin(phi);
+   let x = (1 + .5 * cp) * ct,
+       y = (1 + .5 * cp) * st,
+       z =      .5 * sp;
+   return [ x,y,z, cp*ct,cp*st,sp ];
+});
+
+let strToTris = str => {
+   let tris = [];
+   for (let n = 0 ; n < str.length ; n++)
+      switch (str.charAt(n)) {
+      case 'N': tris.push(-1    ); break;
+      case 'n': tris.push(-0.577); break;
+      case '0': tris.push( 0    ); break;
+      case 'p': tris.push( 0.577); break;
+      case 'P': tris.push( 1    ); break;
+      }
+   return tris;
+}
+
+let cube = strToTris(`PNP00P PPP00P NPP00P  NPP00P NNP00P PNP00P
+                      NPN00N PPN00N PNN00N  PNN00N NNN00N NPN00N
+                      PPNP00 PPPP00 PNPP00  PNPP00 PNNP00 PPNP00
+                      NNPN00 NPPN00 NPNN00  NPNN00 NNNN00 NNPN00
+                      NPP0P0 PPP0P0 PPN0P0  PPN0P0 NPN0P0 NPP0P0
+                      PNN0N0 PNP0N0 NNP0N0  NNP0N0 NNN0N0 PNN0N0`);
+
+let meshData = [
+   { type: 0, mesh: new Float32Array(dt_normal(200,200)) },
+   { type: 1, mesh: new Float32Array(sphere(10, 10)) },
+   { type: 1, mesh: new Float32Array(sphere(10,10))},
+   { type: 1, mesh: new Float32Array(sphere(10, 10)) },
+   { type: 1, mesh: new Float32Array(cube) },
+
+];
+
+let vertexSize = 6;
+let vertexShader = `
+   attribute vec3 aPos, aNor;
+   uniform mat4 uMatrix, uInvMatrix;
+   varying vec3 vPos, vNor;
+   uniform float uTimeV;
+
+   float noise(vec3 point) { float r = 0.; for (int i=0;i<16;i++) {
+     vec3 D, p = point + mod(vec3(i,i/4,i/8) , vec3(4.0,2.0,2.0)) +
+          1.7*sin(vec3(i,5*i,8*i)), C=floor(p), P=p-C-.5, A=abs(P);
+     C += mod(C.x+C.y+C.z,2.) * step(max(A.yzx,A.zxy),A) * sign(P);
+     D=34.*sin(987.*float(i)+876.*C+76.*C.yzx+765.*C.zxy);P=p-C-.5;
+     r+=sin(6.3*dot(P,fract(D)-.5))*pow(max(0.,1.-2.*dot(P,P)),4.);
+   } return .5 * sin(r); }
+
+   float full_noise(vec3 point) {
+      float final = 0.;
+      vec3 P = point;
+      for(float i = 0.; i < 2.; i++) {
+         float factor = pow(2.,i);
+         final += noise(P*factor)/(factor);
+         P = vec3(P.y+10.*i, P.x-15.*i, P.z+20.*i);
+      }
+
+      final += noise(P*7.)/25.;
+
+      return final;
+   }
+
+   float turbulence(vec3 point) {
+      float final = 0.;
+      vec3 P = point;
+      float factor = pow(2.,1.);
+      final += noise(P*factor)/(factor);
+      P = vec3(P.y, P.x, P.z);
+
+      factor = pow(2.,1.);
+      final += abs(noise(P*factor)/(factor));
+      P = vec3(P.y, P.x, P.z);
+      return final;
+   }
+
+   void main() {
+      float density = 23.;
+      float height = 70.;
+      float offset = uTimeV/10.;
+      vec3 point_a = vec3(aPos.x, aPos.y, aPos.z+full_noise(aPos*density+vec3(0.,0.,offset))/height);
+      vec3 point_b = vec3(aPos.x+0.001, aPos.y, aPos.z);
+      vec3 point_c = vec3(aPos.x+0.001, aPos.y+0.001, aPos.z);
+      point_b.z += full_noise(point_b*density+vec3(0.,0.,offset))/height;
+      point_c.z += full_noise(point_c*density+vec3(0.,0.,offset))/height;
+
+      vec3 normal = normalize(cross(point_b-point_a, point_c-point_a));
+
+      vec4 pos = uMatrix * vec4(point_a, 1.0);
+      vec4 nor = vec4(normal, 0.0) * uInvMatrix;
+      vPos = pos.xyz;
+      vNor = nor.xyz;
+      gl_Position = pos * vec4(1.,1.,-.1,1.);
+   }
+`;
+let fragmentShader = `
+   precision mediump float;
+
+   float noise(vec3 point) { float r = 0.; for (int i=0;i<16;i++) {
+     vec3 D, p = point + mod(vec3(i,i/4,i/8) , vec3(4.0,2.0,2.0)) +
+          1.7*sin(vec3(i,5*i,8*i)), C=floor(p), P=p-C-.5, A=abs(P);
+     C += mod(C.x+C.y+C.z,2.) * step(max(A.yzx,A.zxy),A) * sign(P);
+     D=34.*sin(987.*float(i)+876.*C+76.*C.yzx+765.*C.zxy);P=p-C-.5;
+     r+=sin(6.3*dot(P,fract(D)-.5))*pow(max(0.,1.-2.*dot(P,P)),4.);
+   } return .5 * sin(r); }
+
+   float turbulence(vec3 point) {
+      float final = 0.;
+      vec3 P = point;
+      for(float i = 0.; i < 15.; i++) {
+         float factor = pow(2.,i);
+         final += abs(noise(P*factor)/(factor));
+         P = vec3(P.y, P.x, P.z);
+      }
+      return final;
+   }
+
+   float full_noise(vec3 point) {
+      float final = 0.;
+      vec3 P = point;
+      for(float i = 0.; i < 10.; i++) {
+         float factor = pow(2.,i);
+         final += noise(P*factor)/(factor);
+         P = vec3(P.y, P.x, P.z);
+      }
+      return final;
+   }
+
+   uniform float uTime;
+   uniform vec3  uCursor;
+   varying vec3  vPos, vNor;
+
+   uniform vec3 uLight[2];
+   uniform vec3 uLightCol[2];
+   uniform mat4 uLightMat;
+   uniform vec2 uLightInt;
+
+   const float fl = 3.;
+
+   void main(void) {
+      vec3 uColor = vec3(0.,0.,.2);
+      for(int i = 0; i < 2; i++) {
+         vec3 uFillCol = uLightCol[i];
+
+         vec3 dirToLight = vPos-uLight[i];
+         float intensity = distance(vPos, uLight[i]);
+         dirToLight = normalize(dirToLight);
+
+         vec3 N = normalize(vNor);
+
+         intensity /= 2.;
+
+         float varInt = 0.;
+
+         if(i == 0) {
+            varInt = uLightInt.x;
+         } else {
+            varInt = uLightInt.y;
+         }
+
+         vec3 dirToViewer = vPos - vec3(0.,0.,-1.);
+         varInt /= 50.;
+
+         vec3 R = 2. * dot(dirToLight, N) * N - dirToLight;
+         uColor += varInt*20.*(uFillCol * max(0., dot(N, dirToLight)) * uFillCol)/(intensity);
+         uColor += uFillCol * pow(max(0.,dot(R,dirToViewer)),1.6) * uFillCol /(intensity)*varInt;
+
+         
+      }
+
+      float distToViewer = distance(vPos, vec3(0.,0.,1.));
+      uColor = mix(uColor, vec3(0.,0.,0.2), distToViewer/70.);
+      //uColor = min(uColor * (1./(distToViewer/10.)),uColor);
+
+
+      /*
+      vec3 vNor_nor = normalize(vNor);
+      vec3 R = uFill - 2.*dot(uFill, vNor_nor)*vNor_nor;
+      vec3 color = max(0., pow(dot(R, uFill), 0.))*uColor+max(0., dot(vNor_nor, uFill));
+      */
+
+      gl_FragColor = vec4(uColor, 1.);
+   }
+`;
+
+// WAIT 100 MSECS BEFORE STARTING UP
+
+setTimeout(() => {
+   let gl = start_gl(canvas1, meshData, vertexSize, vertexShader, fragmentShader);
+   let uTime   = gl.getUniformLocation(gl.program, "uTime"  );
+   let uCursor = gl.getUniformLocation(gl.program, "uCursor"); 
+   
+   let uTimeV   = gl.getUniformLocation(gl.program, "uTimeV"  );
+   
+   let uMatrix    = gl.getUniformLocation(gl.program, "uMatrix");
+   let uInvMatrix = gl.getUniformLocation(gl.program, "uInvMatrix");
+
+   let uLight = gl.getUniformLocation(gl.program, "uLight");
+   let uLightMat = gl.getUniformLocation(gl.program, "uLightMat");
+   let uLightCol = gl.getUniformLocation(gl.program, "uLightCol");
+   let uLightInt = gl.getUniformLocation(gl.program, "uLightInt");
+
+   let startTime = Date.now() / 1000;
+   setInterval(() => {
+      gl.uniform1f (uTime, Date.now() / 1000 - startTime);
+      gl.uniform1f (uTimeV, Date.now() / 1000 - startTime);
+      let time_d = Date.now() / 1000 - startTime;
+      let light_location = [0, -1.3+(Math.sin(time_d/7)+1)*2, -65, 
+                            Math.cos(time_d/6)*2, -(Math.sin(time_d/9)*0.5)+0.5, (Math.cos(time_d/8)-1)*4-2];
+      let light_col = [0.35-(Math.sin(time_d/7)+1)*0.1,0.35,0, 0,1,1];
+      let light_intensity = [120, 1];
+      let m = mIdentity();
+      gl.uniform3fv(uLight, light_location);
+      gl.uniform3fv(uLightCol, light_col);
+      gl.uniform3fv(uLightMat, m);
+      gl.uniform2fv(uLightInt, light_intensity);
+      //gl.uniform3fv(uCursor, cursor);
+      for (let n = 0 ; n < meshData.length ; n++) {
+        if(n == 0) {
+         
+         let mesh = meshData[n].mesh;
+         m = mIdentity();
+         m = mPerspective(2, m); 
+         m = mScale(100,10,100,m);
+         m = mRotateX(Math.PI/2, m);
+         m = mTranslate(-0.5, -1, 0.2, m);
+         
+         gl.uniformMatrix4fv(uMatrix   , false, m);
+         gl.uniformMatrix4fv(uInvMatrix, false, mInverse(m));
+
+         gl.bufferData(gl.ARRAY_BUFFER, mesh, gl.STATIC_DRAW);
+         gl.drawArrays(meshData[n].type ? gl.TRIANGLE_STRIP : gl.TRIANGLES, 0, mesh.length / vertexSize);
+        } else if(n == 1) {
+          let mesh = meshData[n].mesh;
+          m = mIdentity();
+          m = mPerspective(2, m); 
+          m = mTranslate(light_location[0], light_location[1], light_location[2], m);
+          m = mScale(1, 1, 1, m);
+          gl.uniformMatrix4fv(uMatrix, false, m);
+          gl.uniformMatrix4fv(uInvMatrix, false, mInverse(m));
+
+          gl.bufferData(gl.ARRAY_BUFFER, mesh, gl.STATIC_DRAW);
+          gl.drawArrays(meshData[n].type ? gl.TRIANGLE_STRIP : gl.TRIANGLES, 0, mesh.length / vertexSize);
+        } else if(n == 3) {
+         let mesh = meshData[n].mesh;
+          m = mIdentity();
+          m = mPerspective(2, m); 
+          m = mTranslate(light_location[3], light_location[4], light_location[5], m);
+          m = mScale(0.2, 0.2, 0.2, m);
+          gl.uniformMatrix4fv(uMatrix, false, m);
+          gl.uniformMatrix4fv(uInvMatrix, false, mInverse(m));
+
+          gl.bufferData(gl.ARRAY_BUFFER, mesh, gl.STATIC_DRAW);
+          gl.drawArrays(meshData[n].type ? gl.TRIANGLE_STRIP : gl.TRIANGLES, 0, mesh.length / vertexSize);
+        } else if(n == 4) {
+         m = mIdentity();
+          m = mPerspective(2, m); 
+          gl.uniformMatrix4fv(uMatrix, false, m);
+          gl.uniformMatrix4fv(uInvMatrix, false, mInverse(m));
+
+          gl.bufferData(gl.ARRAY_BUFFER, mesh, gl.STATIC_DRAW);
+          gl.drawArrays(meshData[n].type ? gl.TRIANGLE_STRIP : gl.TRIANGLES, 0, mesh.length / vertexSize);
+        }
+        }
+   }, 30);
+}, 100);
+</script>
+
+
+
+
+
+

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Button } from "semantic-ui-react";
+import { Button, DimmerDimmable } from "semantic-ui-react";
 import { words } from './words.js'
+import { Leaderboard, LeaderboardModal } from "./Leaderboard.jsx";
 import { useNavigate } from "react-router-dom";
+import './Games.css'
 
 export const Wordstreak = props => {
     const [chosenWords, setChosenWords] = useState([])
@@ -11,6 +13,10 @@ export const Wordstreak = props => {
     const [isWrong, setIsWrong] = useState(false)
     const [currStreak, setCurrStreak] = useState(localStorage.getItem('wordstreak-curr') ? parseInt(localStorage.getItem('wordstreak-curr')) : 0)
     const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('wordstreak-record') ? parseInt(localStorage.getItem('wordstreak-record')) : 0)
+    const [showingModal, setShowingModal] = useState(false)
+    const [showingLeaderboard, setShowingLeaderboard] = useState(false)
+    const [refresh, setRefresh] = useState(false)
+
     const navigate = useNavigate()
 
     function longestCommonSubstring(str1, str2) {
@@ -79,18 +85,18 @@ export const Wordstreak = props => {
             setIsWrong(false)
             setCurrStreak(currStreak + 1)
             if (currStreak + 1 > personalRecord) {
-                setPersonalRecord(currStreak + 1)
                 localStorage.setItem('wordstreak-record', currStreak + 1)
+                setPersonalRecord(currStreak + 1)
             }
+            setTimeout(() => {
+                setIsWrong(false)
+                setSelectedIndex(-1)
+                chooseWords()
+            }, [750])
         } else {
             setIsWrong(true)
-            setCurrStreak(0)
+            setShowingModal(true)
         }
-        setTimeout(() => {
-            setIsWrong(false)
-            setSelectedIndex(-1)
-            chooseWords()
-        }, [750])
     }
 
     useEffect(() => {
@@ -102,14 +108,27 @@ export const Wordstreak = props => {
     }, [currStreak])
 
     useEffect(() => {
-        if(!localStorage.getItem('wordstreak-record')) {
+        if (!localStorage.getItem('wordstreak-record')) {
             localStorage.setItem('wordstreak-record', 0)
         }
         chooseWords()
     }, [])
 
-    return <div className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
-        <div style={{ marginBottom: "1rem" }}>{"Current streak: " + currStreak + ". Personal record: " + personalRecord}</div>
+    function restart() {
+        setCurrStreak(0)
+        setIsWrong(false)
+        chooseWords()
+        setSelectedIndex(-1)
+        setShowingModal(false)
+    }
+
+    return <DimmerDimmable dimmed={showingLeaderboard} as='div' className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
+        <Leaderboard showingLeaderboard={showingLeaderboard}
+            game='wordstreak'
+            refresh={refresh}
+            setShowingLeaderboard={setShowingLeaderboard}></Leaderboard>
+        <LeaderboardModal restart={restart} storageKey='wordstreak-curr' game='wordstreak' setRefresh={setRefresh} refresh={refresh} showingModal={showingModal} />
+        <div>{"Current streak: " + currStreak + ". Personal record: " + personalRecord}</div>
         <div>{"What is the definition of: " + chosenWords[correctIndex] + "?"}</div>
         <div style={{ width: "fit-content", maxWidth: "80%", display: "flex", flexDirection: "column", alignItems: "center", margin: 0, padding: 0 }}>
             {definitions.map((definition, index) => {
@@ -125,7 +144,8 @@ export const Wordstreak = props => {
                     key={index}>{index + 1 + ". " + definition}</Button>
             })}
         </div>
-        <Button onClick={() => navigate('/')} style={{backgroundColor: "rgb(180, 130, 130)", fontSize: "1rem"}}>Home</Button>
-    </div>
+        <Button onClick={() => navigate('/')} style={{ backgroundColor: "rgb(180, 130, 130)", fontSize: "1rem" }}>Home</Button>
+        <Button style={{ fontSize: "1rem" }} onClick={() => { setShowingLeaderboard(true) }}>View leaderboard</Button>
+    </DimmerDimmable >
 
 }

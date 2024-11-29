@@ -9,6 +9,7 @@ export const Games = props => {
         <div className="basic-page">
             <Button onClick={() => {navigate('/games/wordstreak')}}>Wordstreak</Button>
             <Button onClick={() => {navigate('/games/geodistance')}}>Geodistance</Button>
+            <Button onClick={() => {navigate('/games/timelines')}}>First in History</Button>
         </div>
     </>
 }

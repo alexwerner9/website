@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
-import { Button, Modal, ModalContent } from "semantic-ui-react";
-import { countries } from "./countries";
+import { Button, DimmerDimmable } from "semantic-ui-react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet'
 import { events } from "./events";
+import { Leaderboard, LeaderboardModal } from "./Leaderboard";
 import './Games.css'
 
 export const Timelines = props => {
+
     const [choices, setChoices] = useState([])
     const [correctIndex, setCorrectIndex] = useState(0)
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [isWrong, setIsWrong] = useState(false)
     const [currStreak, setCurrStreak] = useState(localStorage.getItem('timelines-curr') ? parseInt(localStorage.getItem('timelines-curr')) : 0)
     const [personalRecord, setPersonalRecord] = useState(localStorage.getItem('timelines-record') ? parseInt(localStorage.getItem('timelines-record')) : 0)
+    const [showingLeaderboard, setShowingLeaderboard] = useState(false)
+    const [refresh, setRefresh] = useState(false)
+    const [showingModal, setShowingModal] = useState(false)
     const navigate = useNavigate()
 
     function randomProperty(obj) {
@@ -59,7 +62,7 @@ export const Timelines = props => {
             }
         } else {
             setIsWrong(true)
-            setCurrStreak(0)
+            setShowingModal(true)
         }
     }
 
@@ -78,12 +81,26 @@ export const Timelines = props => {
         nextQuestion()
     }, [])
 
-    return <div className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
+    function restart() {
+        setCurrStreak(0)
+        setIsWrong(false)
+        nextQuestion()
+        setSelectedIndex(-1)
+        setShowingModal(false)
+    }
+
+    return <DimmerDimmable dimmed={showingLeaderboard} as='div' className="basic-page" style={{ color: "var(--tan)", fontSize: "1.3rem" }}>
+        <Leaderboard showingLeaderboard={showingLeaderboard}
+            game='history'
+            refresh={refresh}
+            setShowingLeaderboard={setShowingLeaderboard}></Leaderboard>
+        <LeaderboardModal restart={restart} storageKey='timelines-curr' game='history' setRefresh={setRefresh} refresh={refresh} showingModal={showingModal} />
         <div style={{ marginBottom: "1rem" }}>{"Current streak: " + currStreak + ". Personal record: " + personalRecord}</div>
         <div>{"Which happened first?"}</div>
         <div style={{ width: "fit-content", maxWidth: "80%", display: "flex", flexDirection: "column", alignItems: "center", margin: 0, padding: 0 }}>
             {choices.map((choice, index) => {
                 return <Button
+                    key={index}
                     onClick={() => { makeSelection(index) }}
                     style={{
                         width: "90%",
@@ -112,6 +129,7 @@ export const Timelines = props => {
             <Button disabled={selectedIndex === -1} onClick={nextQuestion} style={{ backgroundColor: "lightgreen", fontSize: "1rem" }}>Next</Button>
         </div>
 
-    </div>
+        <Button style={{ fontSize: "1rem" }} onClick={() => { setShowingLeaderboard(true) }}>View leaderboard</Button>
+    </DimmerDimmable>
 
 }
