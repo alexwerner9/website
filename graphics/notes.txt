@@ -1,0 +1,71 @@
+Splines:
+    Curve smoothly between points
+    Can be used for shapes, 3D, movement, etc
+    Splines have a continuous derivatives
+
+    Use cubic functions so that we can have S-shapes
+        at^3+bt^2+ct+d
+            with x(t) = .... and y(t) = .... you can create
+            a spline. the x and y are cubic equations
+            for the x and y value, and t is between 0 and
+            1, with 1 being the end of that segment.
+            the partial derivatives at 1 for one segment
+            equal the partial derivatives at 0 for the next.
+
+            we want to come up with the cubic coefficients
+            a b c and d. but those are not intuitive, so
+            we need a better way to show the user. we can
+            use matrices to do this mapping from one function
+            space to another.
+
+    Hermite:
+        4 inputs: derivative and height at t=0, derivative
+        and height at t=1. these are P_0, R_0, P_1, R_1.
+        we need to map this to a,b,c,d. each input will have
+        it's own curve that maps to it. look at zoom if
+        confused.
+
+        P_1: 3t^2-2t^3 (0 at t=0, 1 at t=1, derivative of 0 at both)
+        P_0: 1-3t^2-2t^3 (1 at t=0, 0 at t=1, derivative of 0 at both)
+        R_0: t * (t-1)^2 (0 at t=0, 0 at t=1, derivative of 1 at t=0, derivative of 0 at t=1)
+        R_1: t^2 * (t-1) (0 at t=0, 0 at t=1, derivative of 0 at t=0, derivative of 1 at t=1)
+
+        matrix (base):
+         2 -2  1  1
+        -3  3 -2 -1
+         0  0  1  1
+         1  0  0  0
+
+    Bezier:
+        A point at beginning, a point at end, and 2 intermediate points.
+        the intermediate points are not usually connected, and is used
+        for derivatives.
+
+        We can do linear interpolation between 3 points!
+            (1-t((1-t)A+tB)) + t((1-t)B+tC) = 
+            (1-t)^2*A + 2(1-t)t*B + t^2*C
+
+        We really want to do between 4 points, so it's cubic. Also our
+        intermediate points are the 2nd and 3rd points:
+            (1-t)^3*A + 3(1-t)^2t*B + 3(1-t)t^2*C + t^3*D =
+
+            (1-3t+3t^2-t^3)*A +
+            3*(1-2t+t^2)*t*B +
+            3*(t^2-t^3)*C +
+            t^3*D
+
+        Our matrix (base):
+        -1  3 -3  1
+         3 -6  3  0
+        -3  3  0  0
+         1  0  0  0
+
+    B-spline:
+        Each point we add, we have 4 cubic functions created by
+        convoluting that point 4 times. the overlapping cubics
+        between two points can be added together. this allows
+        2nd order derivative continuity.
+
+    Cadmul-romm spline
+        Every point is interpolated between. Two points create a cubic.
+        Allows local control.

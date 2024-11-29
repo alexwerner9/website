@@ -1,0 +1,269 @@
+<head>
+    <style type="text/css">
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body bgcolor=black>
+    <center>
+    <canvas id='canvas1' width="1000" height="100vh"></canvas>
+    
+    <script>
+
+        canvas1.width = window.innerWidth;
+        canvas1.height = window.innerHeight;
+    
+    // THIS FUNCTION DOES ALL OF THE INITIALIZING FOR THE GPU PROGRAM.
+    
+    let start_gl = (canvas, meshData, vertexSize, vertexShader, fragmentShader) => {
+    
+       // GET THE 3D CONTEXT OF THE CANVAS
+    
+       let gl = canvas.getContext("webgl");
+    
+       // CREATE A PROGRAM THAT WILL RUN ON THE GPU
+    
+       let program = gl.createProgram();
+       gl.program = program;
+    
+       // THIS IS HOW WE COMPILE AND ATTACH A SHADER TO THE GPU PROGRAM
+    
+       let addshader = (type, src) => {
+          let shader = gl.createShader(type);
+          gl.shaderSource(shader, src);
+          gl.compileShader(shader);
+          if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+             throw "Cannot compile shader:\n\n" + gl.getShaderInfoLog(shader);
+          gl.attachShader(program, shader);
+       };
+    
+       // ADD THE VERTEX AND FRAGMENT SHADERS
+    
+       addshader(gl.VERTEX_SHADER  , vertexShader  );
+       addshader(gl.FRAGMENT_SHADER, fragmentShader);
+    
+       // LINK THE PROGRAM AND REPORT ANY ERRORS
+    
+       gl.linkProgram(program);
+       if (! gl.getProgramParameter(program, gl.LINK_STATUS))
+          throw "Could not link the shader program!";
+       gl.useProgram(program);
+    
+       // DECLARE A PLACE FOR MY VERTICES TO GO DOWN ON THE GPU
+    
+       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    
+       // PERMIT THE GPU TO RENDER NEARER THINGS IN FRONT OF FARTHER AWAY THINGS
+    
+       gl.enable(gl.DEPTH_TEST);
+       gl.depthFunc(gl.LEQUAL);
+    
+       // SET ANY ONE ATTRIBUTE OF A VERTEX
+    
+       let vertexAttribute = (name, size, position) => {
+          let attr = gl.getAttribLocation(program, name);
+          gl.enableVertexAttribArray(attr);
+          gl.vertexAttribPointer(attr, size, gl.FLOAT, false, vertexSize * 4, position * 4);
+       }
+    
+       // SET THE POSITION ATTRIBUTE
+    
+       vertexAttribute('aPos', 3, 0);
+    
+       return gl;
+    }
+    
+    // HERE WE ARE SETTING UP HOW THE CANVAS RESPONDS TO MOUSE EVENTS.
+    
+    let r = canvas1.getBoundingClientRect(), cursor = [0,0,0];
+    let setCursor = (e, z) => cursor = [ (e.clientX - r.left) / canvas1.width * 2 - 1,
+                                         1 - (e.clientY - r.top) / canvas1.height * 2,
+                                         z !== undefined ? z : cursor[2] ];
+    canvas1.onmousedown = e => setCursor(e, 1);
+    canvas1.onmousemove = e => setCursor(e,  );
+    canvas1.onmouseup   = e => setCursor(e, 0);
+    
+    // ALL OF THE 3D MESH SHAPES THAT WE ARE RENDERING (FOR NOW IT'S JUST ONE SHAPE)
+    
+    let meshData = [
+       { type: 1, mesh: new Float32Array([ -1,1,0, 1,1,0, -1,-1,0, 1,-1,0 ]) },
+    ];
+    
+    // THE VERTEX SHADER, FOLLOWED BY THE FRAGMENT SHADER
+    
+    let vertexSize = 3;
+    let vertexShader = `
+       attribute vec3 aPos;
+       varying   vec3 vPos;
+       void main() {
+          gl_Position = vec4(aPos, 1.0);
+          vPos = aPos;
+       }
+    `;
+    let fragmentShader = `
+       precision mediump float;
+       uniform float uTime;
+       uniform vec3  uCursor;
+       uniform vec2  uResolution;
+       varying vec3  vPos;
+    
+       // THIS IS A SIMPLE EXAMPLE OF IMPLEMENTING YOUR OWN FUNCTION.
+    
+       vec3 makeItBrighter(vec3 color) {
+          return 2. * color;
+       }
+    
+       void main(void) {
+    
+            float PI = 3.14159265;
+            vec2 uv = vec2(vPos.x, vPos.y);
+            uv.y = uv.y/(uResolution.x/uResolution.y);
+
+            vec2 uc = vec2(uCursor.x, uCursor.y);
+            uc.y = uc.y/(uResolution.x/uResolution.y);
+            
+            float speed = 2.8;
+            float dist = length(vec2(uv.x*sin(uTime/speed+PI/6.), uv.y+.9*(sin(uTime/speed))));
+            float sun_dist = length(vec2(uv.x, uv.y+.9*(sin(uTime/speed))));
+            
+            float beg = 0.0;
+            float sunstep = 0.05;
+            float skystep = 1.7*(1.-smoothstep(0.,9.,sin(uTime/speed+PI/2.)));
+            float bluestep = 3.*(1.-smoothstep(0.,9.,sin(uTime/speed+PI/2.)));
+            float blackstep = 4.*(1.-smoothstep(0.,9.,sin(uTime/speed+PI/2.)));
+            
+            float curr_iteration = floor((uTime/speed - PI/2.)/PI/2.);
+            
+            vec3 moon = vec3(0.6,0.6,0.6);
+            vec3 nightsky = vec3(0.1,0.1,0.2);
+            vec3 nightdark = vec3(0.,0.,0.1);
+            
+            vec3 sun = vec3(1.,.8,.5);
+            vec3 sky = vec3(.6,.6,.1);
+            vec3 blueness = vec3(.4,.4,.8);
+            
+            vec3 day_color = mix(sun,sky,smoothstep(beg,sunstep,sun_dist));
+            day_color = mix(day_color,blueness,smoothstep(sunstep,skystep,dist));
+            
+            vec3 night_color = mix(moon,nightsky,smoothstep(beg,sunstep,sun_dist));
+            night_color = mix(night_color,nightdark,smoothstep(sunstep,skystep,dist));
+            
+            vec3 color_1 = mod(curr_iteration, 2.) > 0. ? night_color : day_color;
+            vec3 color_2 = mod(curr_iteration, 2.) > 0. ? day_color : night_color;
+            
+            float mixing_location = smoothstep(0.,1.,sin(uTime/speed)*(mod(curr_iteration+1., 2.)));
+            vec3 col = mix(color_1, color_2, mixing_location);
+
+            float brightness = -20.;
+
+            // shadow
+            float brightness_offset = 0.;
+            for(float i = 0.; i < 3.; i += 1.) {
+               // distance to sun per pixel
+               float x_dist = uc.x;
+               float y_dist = uc.y + .9*(sin(uTime/speed));
+
+               x_dist *= 0.05;
+               y_dist *= 0.05;
+
+               dist = distance(uv+vec2(0.2*i/4.5-x_dist,0.-y_dist),uc);
+               brightness_offset = min(brightness_offset, -0.5*(1.-step(0.035,dist)));
+            }
+            for(float i = 0.; i < 2.; i += 1.) {
+               // distance to sun per pixel
+               float x_dist = uc.x;
+               float y_dist = uc.y + .9*(sin(uTime/speed));
+
+               x_dist *= 0.05;
+               y_dist *= 0.05;
+               dist = distance(uv+vec2(0.2*i/4.5+0.02-x_dist,-0.035-y_dist),uc);
+               brightness_offset = min(brightness_offset, -0.5*(1.-step(0.035,dist)));
+            }
+
+            // clouds
+            for(float i = 0.; i < 2.; i += 1.) {
+               dist = distance(uv+vec2(0.2*i/4.5+0.02,-0.035),uc);
+               brightness = max(brightness, 1.-step(0.03,dist));
+            }
+            for(float i = 0.; i < 3.; i += 1.) {
+               dist = distance(uv+vec2(0.2*i/4.5,0.),uc);
+               brightness = max(brightness, 1.-step(0.03,dist));
+            }
+            dist = distance(uv, uc);
+            brightness *= (1.+0.02);
+            brightness += brightness_offset;
+
+            col += brightness/5.;
+
+            dist = length(vec2(uv.x, uv.y+5.5));
+            brightness = step(5.2,dist);
+            col *= brightness;
+    
+            gl_FragColor = vec4(col, 1.);
+       }
+    `;
+    
+    // WAIT 100 MSECS BEFORE STARTING UP
+    
+    setTimeout(() => {
+    
+       // INITIALIZE GPU GRAPHICS
+    
+       let gl = start_gl(canvas1, meshData, vertexSize, vertexShader, fragmentShader);
+    
+       // PASS UNIFORM VARIABLES
+    
+       let uTime   = gl.getUniformLocation(gl.program, "uTime"  );
+       let uCursor = gl.getUniformLocation(gl.program, "uCursor");
+       let uResolution = gl.getUniformLocation(gl.program, "uResolution")
+    
+       // WHEN DID WE START ANIMATING?
+    
+       let startTime = Date.now() / 1000;
+    
+       // START THE ANIMATION LOOP
+    
+       setInterval(() => {
+    
+          // PASS ELAPSED TIME DOWN TO THE GPU
+    
+          gl.uniform1f (uTime, Date.now() / 1000 - startTime);
+    
+          // PASS THE CURSOR STATE DOWN TO THE GPU
+    
+          gl.uniform3fv(uCursor, cursor);
+
+          // PASS RESOLUTION TO GPU
+
+          gl.uniform2fv(uResolution, [window.innerWidth,window.innerHeight]);
+    
+          // LOOP THROUGH ALL OF MY SHAPES
+    
+          for (let n = 0 ; n < meshData.length ; n++) {
+    
+             // PULL OUT THE ACTUAL MESH DATA
+    
+             let mesh = meshData[n].mesh;
+    
+         // LOAD THAT DATA DOWN INTO THE GPU
+    
+             gl.bufferData(gl.ARRAY_BUFFER, mesh, gl.STATIC_DRAW);
+    
+             // RENDER THAT DATA ACCORDING TO WHAT TYPE IT IS
+    
+             gl.drawArrays(meshData[n].type ? gl.TRIANGLE_STRIP : gl.TRIANGLES, 0, mesh.length / vertexSize);
+          }
+       }, 30);
+    }, 100);
+    </script>
+    
+    
+    
+    
+    
+    
+    
+    

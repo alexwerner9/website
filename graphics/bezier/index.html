@@ -1,0 +1,384 @@
+<head>
+    <style type="text/css">
+        #main-div {
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+        #spline {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            left: 64vw;
+            top: 120vh;
+        }
+        #spline2 {
+            position: absolute;
+            left: 64vw;
+            top: 25vh;
+            width: 300px;
+            height: 300px;
+        }
+        .explanation {
+            font-size: 20px;
+            width: 50%;
+        }
+    </style>
+    <script>
+    MathJax = {
+        tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        packages: {'[+]': ['color']}
+        },
+        loader: {load: ['[tex]/color']}
+    };
+    </script>
+    <script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+    </script>
+</head>
+<body>
+    <div id="main-div">
+        <div class="explanation" id="main_explanation">
+            <p>
+            Bezier curves are very useful because they are very intuitive to work with.
+            The most basic form of the Bezier curve has $4$ points: $A$, $B$, $C$ and $D$. This 4
+            points are enough to make a quadradic curve. They do this by doing successive
+            linear interpolations. We can connect $A$, $B$, $C$ and $D$ with straight lines, and
+            then loop over a value $t$ from $0$ to $1$. We linearly interpolate between $A$ and $B$,
+            $B$ and $C$, and $C$ and $D$, leaving us with $3$ points (the blue, teal and green in
+            our diagram). Let's call them $E$, $F$ and $G$. Then, we take those points and connect them with lines, and
+            linearly interpolate between those lines (again with our value $t$). This will
+            leave us with $2$ points. Let's call them $H$ and $I$. Then, you guessed it, 
+            we linearly interpolate yet again, leaving us with a sole point. Let's call it $J$. 
+            This is the point we draw our line to.
+            </p>
+            <p>
+            This means that we can take our points $A$, $B$, $C$, and $D$ and make function with
+            respect to $t$ for our $x$ and $y$ points. We can do this by calculating the linear
+            interpolations each.
+            <blockquote>
+                <span style="color: blue">$E=(1-t)\cdot A+t\cdot B$</span><br>
+                <span style="color: teal">$F=(1-t)\cdot B+t\cdot C$</span><br>
+                <span style="color: green">$G=(1-t)\cdot C+t\cdot D$</span><br>
+                <br>
+                $H=(1-t)\cdot E+t\cdot F$<br>
+                $I=(1-t)\cdot F+t\cdot G$<br>
+                <br>
+                <span style="color: red">$J=(1-t)\cdot H+t\cdot I$</span>
+            </blockquote>
+            Then we can simply expand this out into a fun long equation.
+            <blockquote>
+                $J=(1-t)\cdot ((1-t)\cdot (\color{blue}(1-t)\cdot A+t\cdot B\color{black})+t\cdot (\color{teal}(1-t)\cdot B+t\cdot C)\color{black}) + t\cdot ((1-t)\cdot (\color{teal}(1-t)\cdot B+t\cdot C\color{black})+t\cdot (\color{red}(1-t)\cdot C+t\cdot D\color{black}))$
+            </blockquote>
+            If you expanded this and grouped like terms, you'd end up with
+            <blockquote>
+                $J=(-A + 3B - 3C + D)\cdot t^3 + (3A - 6B + 3C)\cdot t^2 + (-3A + 3B)\cdot t + D$
+            </blockquote>
+            This leaves us with an equation of $A$, $B$, $C$ and $D$, and we can use this for our
+            $x$ and $y$ functions, which I've shown for the interactive spline to the right. Click
+            to move the points and get the resulting equation.
+            </p>
+            <blockquote id="abcd">
+
+            </blockquote>
+            <blockquote id="x">
+                Hello
+            </blockquote>
+            <blockquote id="y">
+                Hello
+            </blockquote>
+        </div>
+        <div>
+            <canvas id="spline" width="300px" height="300px"></canvas>
+            <canvas id="spline2" width="300px" height="300px"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let mouseX = 0;
+        let mouseY = 0;
+
+        let pause = true;
+
+        let mousedown = false;
+        let sx = 0;
+        let sy = 0;
+        let dx = 0;
+        let dy = 0;
+
+        let currCanvas = spline;
+
+        document.onmousemove = (event) => {
+            mousePos = getMousePos(event);
+            mouseX = mousePos.x;
+            mouseY = mousePos.y;
+
+            pause = mouseX < 0 || mouseX > 300 || mouseY < 0 || mouseY > 300;
+        }
+
+        function getMousePos(evt) {
+            var rect = currCanvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+
+        spline.onmousedown = (event) => {
+            dx = mouseX - sx;
+            dy = mouseY - sy;
+            mousedown = true;
+        }
+        document.onmouseup = (event) => {
+            mousedown = false;
+            update_latex = true;
+        }
+
+        let ctx = spline.getContext('2d');
+        let ctx2 = spline2.getContext('2d');
+        ctx.lineCap = "round";
+
+        let line = (x1, y1, x2, y2) => {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2,y2);
+            ctx.stroke();
+        }
+
+        function lerp (start, end, amt){
+            return (1-amt)*start+amt*end
+        }
+
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
+        }
+
+        let x1 = 15;
+        let y1 = 280;
+        let x2 = 100;
+        let y2 = 60;
+        let x3 = 200;
+        let y3 = 80;
+        let x4 = 280;
+        let y4 = 280;
+
+        let animation_speed = 1;
+
+        let time = Date.now() / 1000;
+
+        mouseX = x1;
+        mouseY = y1;
+
+        let dt = 0;
+        let framesPassed = 0;
+
+        let update_latex = true;
+
+        let _animate = (which) => {
+            let red = "red";
+            let teal = "teal";
+            let blue = "blue";
+            let black = "black";
+            let green = "green";
+
+            let c1 = "rgb(50,50,255)";
+            let c2 = "rgb(255,50,50)";
+            let c3 = "rgb(255,50,255)";
+            if(pause && !which) {
+                red = "lightred";
+                teal = "lightteal";
+                blue = "lightblue";
+                black = "grey";
+                green = "lightgreen";
+                c1 = "rgb(180,180,255)";
+                c2 = "rgb(255,180,180)";
+                c3 = "rgb(255,180,255)";
+            } else {
+                framesPassed += 1;
+            }
+            dt = framesPassed / 30;
+            dt /= 4;
+            ctx.fillStyle = "white";
+            ctx.fillRect(0,0,300,300);
+
+            ctx.fillStyle = red;
+            ctx.strokeStyle = teal;
+            ctx.setLineDash([]);
+            ctx.lineWidth = 3;
+
+            dt = dt % 1.4;
+
+            let axE = -x1 + 3*x2 - 3*x3 + x4;
+            let ayE = -y1 + 3*y2 - 3*y3 + y4;
+
+            let bxE = 3*x1 - 6*x2 + 3*x3;
+            let byE = 3*y1 - 6*y2 + 3*y3;
+
+            let cxE = -3*x1 + 3*x2;
+            let cyE = -3*y1 + 3*y2;
+
+            let dxE = x4;
+            let dyE = y4;
+
+            let lt = Math.min(1, dt).toFixed(2);
+
+            if(update_latex) {
+                x.innerHTML = "$J_x(t)=" + Math.floor(axE) + "t^3 + " + Math.floor(bxE) + "t^2 + " + Math.floor(cxE) + "t + " + Math.floor(dxE) + "$";
+                y.innerHTML = "$J_y(t)=" + Math.floor(ayE) + "t^3 + " + Math.floor(byE) + "t^2 + " + Math.floor(cyE) + "t + " + Math.floor(dyE) + "$";
+                abcd.innerHTML = "$A$: ($" + x1 + "$,$" + y1 + "$), $B$: ($" + x2 + "$,$" + y2 + "$), $C$: ($" + x3 + "$,$" + y3 + "$), $D$: ($" + x4 + "$,$" + y4 + "$)"; 
+                MathJax.texReset();
+                MathJax.typesetClear();
+                MathJax.typeset();
+                update_latex = false;
+            }
+
+            ctx.beginPath();
+            ctx.arc(x1, y1, 10, 0, 2 * Math.PI, true);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x2, y2, 10, 0, 2 * Math.PI, true);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x3, y3, 10, 0, 2 * Math.PI, true);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x4, y4, 10, 0, 2 * Math.PI, true);
+            ctx.stroke();
+
+            let dt1 = distance(x1, y1, mouseX, mouseY);
+            let dt2 = distance(x2, y2, mouseX, mouseY);
+            let dt3 = distance(x3, y3, mouseX, mouseY);
+            let dt4 = distance(x4, y4, mouseX, mouseY);
+
+            let min = Math.min(dt1, dt2, dt3, dt4);
+
+            ctx.strokeStyle = black;
+            ctx.lineWidth = 3;
+
+            if(!mousedown) {
+                if(min == dt1) {
+                    sx = x1;
+                    sy = y1;
+                } else if(min == dt2) {
+                    sx = x2;
+                    sy = y2;
+                } else if(min == dt3) {
+                    sx = x3;
+                    sy = y3;
+                } else if(min == dt4) {
+                    sx = x4;
+                    sy = y4;
+                }
+            } else {
+                if(sx == x1 && sy == y1) {
+                    x1 = mouseX - dx;
+                    y1 = mouseY - dy;
+                    sx = x1;
+                    sy = y1;
+                } else if(sx == x2 && sy == y2) {
+                    x2 = mouseX - dx;
+                    y2 = mouseY - dy;
+                    sx = x2;
+                    sy = y2;
+                } else if(sx == x3 && sy == y3) {
+                    x3 = mouseX - dx;
+                    y3 = mouseY - dy;
+                    sx = x3;
+                    sy = y3;
+                } else if(sx == x4 && sy == y4) {
+                    x4 = mouseX - dx;
+                    y4 = mouseY - dy;
+                    sx = x4;
+                    sy = y4;
+                }
+            }
+
+            if(sx != 0 && sy != 0 && !pause) {
+                ctx.setLineDash([5, 5]);
+                line(sx, sy, mouseX, mouseY);
+                ctx.setLineDash([]);
+            }
+
+            line(x1, y1, x2, y2);
+            line(x2, y2, x3, y3);
+            line(x3, y3, x4, y4);
+
+            ctx.strokeStyle = blue;
+            let prev_x = x1;
+            let prev_y = y1;
+
+            let topBound = 0;
+            if(which == 0) {
+                topBound = Math.min(dt, 1.0001);
+            } else {
+                topBound = Math.min(1, mouseX / 300);
+            }
+            let px1, py1, px2, py2, px3, py3, ix1, iy1, ix2, iy2, fx, fy = 0;
+            for(let t = 0; t <= topBound; t += 0.002) {
+                px1 = lerp(x1, x2, t);
+                py1 = lerp(y1, y2, t);
+
+                px2 = lerp(x2, x3, t);
+                py2 = lerp(y2, y3, t);
+
+                px3 = lerp(x3, x4, t);
+                py3 = lerp(y3, y4, t);
+
+                ix1 = lerp(px1, px2, t);
+                iy1 = lerp(py1, py2, t);
+                
+                ix2 = lerp(px2, px3, t);
+                iy2 = lerp(py2, py3, t);
+
+                fx = lerp(ix1, ix2, t);
+                fy = lerp(iy1, iy2, t);
+                
+                ctx.strokeStyle = black;
+                ctx.lineWidth = 5;
+                ctx.setLineDash([]);
+                line(prev_x, prev_y, fx, fy);
+
+                prev_x = fx;
+                prev_y = fy;
+            }
+            ctx.setLineDash([2, 2]);
+            ctx.strokeStyle = c1;
+            ctx.fillStyle = c1;
+            ctx.lineWidth = 1;
+            line(px1, py1, px2, py2);
+            ctx.beginPath();
+            ctx.arc(px1, py1, 5, 0, 2 * Math.PI, true);
+            ctx.fill();
+
+            ctx.strokeStyle = c2;
+            ctx.fillStyle = c3;
+            line(px2, py2, px3, py3);
+            ctx.beginPath();
+            ctx.arc(px2, py2, 5, 0, 2 * Math.PI, true);
+            ctx.fill();
+            ctx.fillStyle = c2;
+            ctx.beginPath();
+            ctx.arc(px3, py3, 5, 0, 2 * Math.PI, true);
+            ctx.fill();
+
+            ctx.strokeStyle = green;
+            ctx.fillStyle = green;
+            line(ix1, iy1, ix2, iy2);
+            ctx.beginPath();
+            ctx.arc(fx, fy, 5, 0, 2 * Math.PI, true);
+            ctx.fill();
+        }
+
+        let animate = () => {
+            ctx = spline.getContext('2d');
+            _animate(0);
+            ctx = spline2.getContext('2d');
+            _animate(1);
+        }
+
+        setInterval(animate, 30);
+
+    </script>
+
+</body>

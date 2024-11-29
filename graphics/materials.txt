@@ -1,0 +1,22 @@
+let metal = (r,g,b) => {
+   return { ambient: [r/32,g/32,b/32], diffuse: [r/24,g/24,b/24], specular: [3*r,3*g,3*b,50] };
+}
+
+materials = []; 
+materials.black  = { ambient: [.0 ,.0 ,.0 ], diffuse: [.0 ,.0 ,.0 ], specular: [.9,.9,.9,20] };
+materials.blue   = { ambient: [.04,.06,.2 ], diffuse: [.16,.24,.8 ], specular: [.9,.9,.9,20] };
+materials.bronze = metal(.76,.35,.025);
+materials.copper = metal(.72,.25,.05);
+materials.cyan   = { ambient: [.0 ,.16,.12], diffuse: [.0 ,.64,.48], specular: [.9,.9,.9,20] };
+materials.gold   = metal(.80,.46,.00);
+materials.green  = { ambient: [.0 ,.18,.0 ], diffuse: [.0 ,.64,.0 ], specular: [.9,.9,.9,20] };
+materials.indigo = { ambient: [.06,.0 ,.2 ], diffuse: [.24,.0 ,.8 ], specular: [.9,.9,.9,20] };
+materials.orange = { ambient: [.2 ,.04,.0 ], diffuse: [.8 ,.16,.0 ], specular: [.9,.9,.9,20] };
+materials.pink   = { ambient: [.2 ,.1 ,.1 ], diffuse: [.8 ,.4 ,.4 ], specular: [.9,.9,.9,20] };
+materials.red    = { ambient: [.2 ,.0 ,.0 ], diffuse: [.8 ,.0 ,.0 ], specular: [.9,.9,.9,20] };
+materials.silver = metal(.70,.70,.70);
+materials.violet = { ambient: [.2 ,.0 ,.2 ], diffuse: [.8 ,.0 ,.8 ], specular: [.9,.9,.9,20] };
+materials.white  = { ambient: [.2 ,.2 ,.2 ], diffuse: [.8 ,.8 ,.8 ], specular: [.9,.9,.9,20] };
+materials.yellow = { ambient: [.2 ,.18,.0 ], diffuse: [.8 ,.72,.0 ], specular: [.9,.9,.9,20] };
+   
+
